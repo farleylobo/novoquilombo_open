@@ -149,13 +149,21 @@ class ContratoSiteFormularios(unittest.TestCase):
         for form, (_, mapa, _) in tecelagem.FORMULARIOS.items():
             m = re.search(rf'<form name="{form}" data-netlify="true"[^>]*>(.*?)</form>', html, re.S)
             self.assertIsNotNone(m, f'formulário {form} não declarado no index.html')
-            campos = set(re.findall(r'name="([a-z_]+)"', m.group(1)))
+            campos = set(re.findall(r'name="([a-z_0-9]+)"', m.group(1)))
             self.assertTrue(set(mapa) <= campos, f'{form}: faltam {set(mapa) - campos}')
 
     def test_campos_usados_no_app(self):
-        js = apoio.ler(os.path.join(apoio.RAIZ, 'site', 'app.js'))
+        js = apoio.ler(os.path.join(apoio.RAIZ, 'site', 'app.js')) + apoio.ler(os.path.join(apoio.RAIZ, 'site', 'participar.js'))
         for form, (_, mapa, _) in tecelagem.FORMULARIOS.items():
-            self.assertIn(f"'{form}'", js, f'app.js não envia o formulário {form}')
+            self.assertIn(f"'{form}'", js, f'o site não envia o formulário {form}')
+
+    def test_participar_envia_todos_os_campos_da_planilha(self):
+        import re
+        js = apoio.ler(os.path.join(apoio.RAIZ, 'site', 'participar.js'))
+        bloco = re.search(r'function campos\(\)[^{]*\{(.*?)\n\}', js, re.S).group(1)
+        enviados = set(re.findall(r'\b([a-z_0-9]+):', bloco))
+        faltam = set(tecelagem.FORMULARIOS['participar'][1]) - enviados
+        self.assertEqual(faltam, set(), f'participar.js não envia: {faltam}')
 
 
 if __name__ == '__main__':

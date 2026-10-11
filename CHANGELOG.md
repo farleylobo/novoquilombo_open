@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.4.0 — 11/10/2026 · "Faça parte"
+
+- Nova página **`participar.html`**: cadastro em 5 passos com prévia do card, em PT e EN. Portada do protótipo de 11/10 e ligada pelo botão "Faça parte" no mapa e em "Como participar".
+- O envio vai para o formulário `participar` do Netlify, declarado escondido no `index.html`. As escolhas seguem sempre em português, nos dois idiomas.
+- Nova aba **Cadastros** na planilha de tecelagem:
+  - `Incluir no mapa? = Sim` põe a pessoa no mapa, se ela escolheu aparecer e tem 18 anos ou mais;
+  - se a pessoa já estava no mapa, o cadastro soma ao que ela já tinha;
+  - oferta e pedido autorizados entram também na aba Mural, esperando moderação.
+- O card no mapa mostra **propósito** (até 432 caracteres) e **fios que tece** (até 4 dos 12).
+- Comunidades novas: A Gente Muda, Guerreiros Sem Armas, Antroposofia/Teosofia e afins, Espiritualidade & Religião, com nome em inglês.
+- Ficam fora do site: contato, cidade, aniversário, organizações de interesse, necessidade, objetivo, formatos e indicações.
+- Painel: conta os cadastros esperando revisão.
+- Testes: 90 unitários e 30 de ponta a ponta.
+
 ## 2.3.0 — 11/10/2026 · Pronto para publicar e abrir o código
 
 - **Sobre os dados** (PT/EN), no rodapé e no link `#sobre`: o que aparece, o que nunca aparece, base legal, direitos e contato. O e-mail fica em `rnq/config.py` (`CONTATO_PRIVACIDADE`), e o export avisa enquanto estiver vazio.

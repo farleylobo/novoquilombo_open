@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Faça parte da RNQ</title>
+<meta name="description" content="Cadastro na Rede Novo Quilombo: conte quem você é, onde atua, o que oferece e o que pede à rede.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="participar.css">
+</head>
+<body>
+<div class="mock" id="demoBanner" hidden data-i18n="pa_demo">Modo demonstração: nada é enviado.</div>
+<header>
+  <div class="brand"><img src="img/olho-horus.png" alt=""><div><h1 data-i18n="titulo">Rede Novo Quilombo</h1><p data-i18n="pa_lema">Diversidade · Unidade</p></div></div>
+  <div class="lang" role="group" aria-label="Idioma" data-i18n-aria="idioma"><button type="button" data-lang="pt" lang="pt-BR" title="Português">PT</button><button type="button" data-lang="en" lang="en" title="English">EN</button></div>
+  <a class="back" href="./" id="voltar" data-i18n="pa_voltar">← Voltar ao mapa</a>
+</header>
+
+<div class="wrap">
+  <main>
+    <section class="intro" id="intro">
+      <h2 data-i18n="pa_titulo">Faça parte da Rede Novo Quilombo</h2>
+      <p data-i18n="pa_intro">Estamos mapeando quem já faz um trabalho bonito nas nossas comunidades. Quando a gente se enxerga, fica mais fácil se encontrar, trocar e fazer junto, sem precisar de intermediário. Conte um pouco de você e do que você pode oferecer e pedir à rede.</p>
+      <div class="eye" aria-hidden="true"><img src="img/olho-horus.png" alt=""></div>
+    </section>
+
+    <ol class="steps" id="steps" aria-label="Passos" data-i18n-aria="pa_passos"></ol>
+
+    <form class="panel" id="form" novalidate>
+      <!-- 1 -->
+      <fieldset data-step="0" style="border:0;padding:0;margin:0">
+        <p class="stepno" data-passo="1"></p>
+        <h3 data-i18n="pa_s1_t">Quem é você</h3>
+        <p class="hint" data-i18n="pa_s1_h">Do jeito que você quer aparecer para a rede.</p>
+        <div class="fields">
+          <div><span class="f-label" data-i18n="pa_quem">Você está respondendo…</span>
+            <div class="seg" role="group" aria-label="Tipo de resposta" data-i18n-aria="pa_quem">
+              <button type="button" id="whoP" aria-pressed="true" data-i18n="pa_por_mim">Por mim</button>
+              <button type="button" id="whoO" aria-pressed="false" data-i18n="pa_por_org">Por uma organização</button>
+            </div>
+            <p class="help" id="whoHelp"></p>
+          </div>
+          <div><label class="f" for="nome"><span data-i18n="pa_nome">Nome</span> <span class="req">*</span></label><input type="text" id="nome" autocomplete="name" maxlength="90" data-i18n-ph="pa_nome_ph"><div class="err" id="e-nome" hidden data-i18n="pa_e_nome">Escreva seu nome para continuar.</div></div>
+          <div><label class="f" for="contato"><span data-i18n="pa_contato">E-mail ou WhatsApp</span> <span class="req">*</span> <small data-i18n="pa_contato_dica">· privado, usado só para apresentações</small></label><input type="text" id="contato" autocomplete="email" maxlength="120" data-i18n-ph="pa_contato_ph"><div class="err" id="e-contato" hidden data-i18n="pa_e_contato">Deixe um e-mail ou WhatsApp para a gente conseguir te apresentar a alguém.</div></div>
+          <div><label class="f" for="linkedin">LinkedIn <small data-i18n="pa_opcional">· opcional</small></label><input type="url" id="linkedin" maxlength="200" placeholder="linkedin.com/in/…"></div>
+          <div class="two">
+            <div><label class="f" for="cargo"><span data-i18n="pa_cargo">Cargo ou ocupação</span> <small data-i18n="pa_opcional">· opcional</small></label><input type="text" id="cargo" maxlength="90" data-i18n-ph="pa_cargo_ph"></div>
+            <div><label class="f" for="org" id="orgLabel"></label><input type="text" id="org" maxlength="90" data-i18n-ph="pa_org_ph"><div class="err" id="e-org" hidden data-i18n="pa_e_org">Escreva o nome da organização.</div></div>
+          </div>
+          <div><label class="f" for="proposito"><span data-i18n="pa_proposito">Qual é o seu propósito?</span> <small data-i18n="pa_opcional">· opcional</small><span class="counter" id="c-prop">0/432</span></label>
+            <textarea id="proposito" maxlength="432" style="min-height:84px" data-i18n-ph="pa_proposito_ph"></textarea>
+            <p class="help" data-i18n="pa_proposito_dica">Em poucas palavras, o que move o seu trabalho. Até 432 caracteres.</p></div>
+          <div class="orgbox" id="orgbox" hidden>
+            <div class="two">
+              <div><label class="f" for="orgsite" data-i18n="pa_orgsite">Site ou LinkedIn da organização</label><input type="url" id="orgsite" maxlength="200" placeholder="https://"></div>
+              <div><label class="f" for="orgtipo" data-i18n="pa_orgtipo">Tipo de organização</label><select id="orgtipo"></select></div>
+            </div>
+            <p class="help" data-i18n="pa_org_dica">A organização entra no mapa ligada a você, que fica como pessoa de contato.</p>
+          </div>
+          <div class="two">
+            <div><label class="f" for="local"><span data-i18n="pa_local">Cidade e estado (ou país)</span> <small data-i18n="pa_privado">· privado</small></label><input type="text" id="local" maxlength="80" data-i18n-ph="pa_local_ph"></div>
+            <div><span class="f-label"><span data-i18n="pa_aniver">Aniversário</span> <small data-i18n="pa_aniver_dica">· opcional, só dia e mês</small></span>
+              <div class="bday"><select id="bdia" aria-label="Dia" data-i18n-aria="pa_dia"></select><select id="bmes" aria-label="Mês" data-i18n-aria="pa_mes"></select></div>
+              <p class="help" data-i18n="pa_aniver_help">Para a rede lembrar de você no seu dia.</p></div>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- 2 -->
+      <fieldset data-step="1" hidden style="border:0;padding:0;margin:0">
+        <p class="stepno" data-passo="2"></p>
+        <h3 data-i18n="pa_s2_t">Onde você atua</h3>
+        <p class="hint" data-i18n="pa_s2_h">É assim que a rede encontra quem trabalha com temas parecidos e quem faz a ponte entre comunidades.</p>
+        <div class="fields">
+          <div><span class="f-label"><span data-i18n="dim_temas">Temas</span> <span class="req">*</span><small data-i18n="pa_ate7">· até 7</small><span class="counter" id="c-temas"></span></span><div class="chips" id="temas"></div>
+            <input type="text" id="outroTema" maxlength="60" style="margin-top:8px" hidden data-i18n-ph="pa_outro_tema_ph"><div class="err" id="e-temas" hidden data-i18n="pa_e_temas">Escolha pelo menos um tema.</div></div>
+          <div><span class="f-label"><span data-i18n="pa_atuacao">Tipo de atuação</span> <small data-i18n="pa_quantos">· quantos quiser</small></span><div class="chips" id="atuacao"></div></div>
+          <div><span class="f-label"><span data-i18n="pa_coms">De quais comunidades e redes você participa?</span> <small data-i18n="pa_quantas">· quantas quiser</small></span><div class="chips" id="comunidades"></div>
+            <p class="help" style="margin:6px 0 0" data-i18n="pa_coms_dica">Quem participa de mais de uma comunidade faz ponte entre elas.</p>
+            <input type="text" id="outraCom" maxlength="60" style="margin-top:8px" hidden data-i18n-ph="pa_outra_com_ph"></div>
+          <div><label class="f" for="querOrgs"><span data-i18n="pa_quer_orgs">De quais organizações você gostaria de participar ou se aproximar?</span> <small data-i18n="pa_opc_priv">· opcional, privado</small></label>
+            <textarea id="querOrgs" maxlength="300" style="min-height:70px" data-i18n-ph="pa_quer_orgs_ph"></textarea>
+            <p class="help" data-i18n="pa_quer_orgs_dica">Não aparece no site. Ajuda a rede a te aproximar de quem já está lá dentro.</p></div>
+          <div><label class="f" for="necessidade" data-i18n="pa_necessidade">Que necessidade você mais quer ver resolvida no seu território ou comunidade?</label>
+            <select id="necessidade"></select>
+            <p class="help" data-i18n="pa_necessidade_dica">Ajuda a juntar gente diferente em torno de algo concreto.</p></div>
+        </div>
+      </fieldset>
+
+      <!-- 3 -->
+      <fieldset data-step="2" hidden style="border:0;padding:0;margin:0">
+        <p class="stepno" data-passo="3"></p>
+        <h3 data-i18n="pa_s3_t">O que você oferece e o que você pede</h3>
+        <p class="hint" data-i18n="pa_s3_h">Toda pessoa tem algo a oferecer e algo a pedir. Quanto mais concreto, mais fácil alguém da rede responder.</p>
+        <div class="fields">
+          <div class="box-of"><span class="tag of" data-i18n="oferta">Oferta</span>
+            <span class="f-label" style="margin-top:6px"><span data-i18n="pa_oferecer">O que você pode oferecer à rede agora?</span> <small data-i18n="pa_opcional">· opcional</small></span>
+            <div class="chips" id="ofertas"></div>
+            <label class="f" for="oferta" style="margin-top:12px;font-weight:400;color:var(--muted)" data-i18n="pa_suas_palavras">Conte com suas palavras, se quiser</label>
+            <textarea id="oferta" maxlength="420" data-i18n-ph="pa_oferta_ph"></textarea></div>
+          <div class="box-pe"><span class="tag pe" data-i18n="pedido">Pedido</span>
+            <label class="f" for="pedido" style="margin-top:6px" data-i18n="pa_pedir">O que você pediria à rede agora?</label>
+            <textarea id="pedido" maxlength="420" data-i18n-ph="pa_pedido_ph"></textarea></div>
+          <label class="chk"><input type="checkbox" id="mural" checked> <span data-i18n="pa_mural">Pode publicar minha oferta e meu pedido no mural da rede (depois de revisão).</span></label>
+        </div>
+      </fieldset>
+
+      <!-- 4 -->
+      <fieldset data-step="3" hidden style="border:0;padding:0;margin:0">
+        <p class="stepno" data-passo="4"></p>
+        <h3 data-i18n="pa_s4_t">Qual é o seu objetivo na rede agora?</h3>
+        <p class="hint" data-i18n="pa_s4_h">Não tem resposta certa. Dá para mudar quando quiser.</p>
+        <div class="fields">
+          <div class="cards" id="abertura" role="radiogroup" aria-label="Seu objetivo na rede agora" data-i18n-aria="pa_s4_t"></div>
+          <div class="err" id="e-abertura" hidden data-i18n="pa_e_abertura">Escolha como você quer participar. Dá para mudar depois.</div>
+          <div id="fiosBox" class="fiosbox" hidden>
+            <span class="f-label"><span data-i18n="pa_fios">Que fios você quer tecer na rede?</span> <small data-i18n="pa_ate4">· escolha até 4</small><span class="counter" id="c-fios"></span></span>
+            <p class="help" style="margin:0 0 10px" data-i18n="pa_fios_dica">Todo mundo pode tecer. Cada fio é um jeito de cuidar da rede. Escolha pelas perguntas que mais mexem com você.</p>
+            <div class="fios" id="fios"></div>
+          </div>
+          <div><span class="f-label"><span data-i18n="pa_formatos">Formatos que você topa</span> <small data-i18n="pa_opcional">· opcional</small></span><div class="chips" id="formatos"></div></div>
+        </div>
+      </fieldset>
+
+      <!-- 5 -->
+      <fieldset data-step="4" hidden style="border:0;padding:0;margin:0">
+        <p class="stepno" data-passo="5"></p>
+        <h3 data-i18n="pa_s5_t">Quase lá</h3>
+        <div class="fields">
+          <div><span class="f-label"><span data-i18n="pa_indicar">Quem mais deveria estar aqui?</span> <small data-i18n="pa_ate3">· opcional, até 3</small></span>
+            <p class="help" style="margin:0 0 8px" data-i18n="pa_indicar_dica">Vale muito indicar alguém de fora da sua bolha: outro território, outra geração, outro jeito de ver o mundo.</p>
+            <div class="ind"><input type="text" id="ind1" maxlength="150" data-i18n-ph="pa_ind_ph"><input type="text" id="ind2" maxlength="150" data-i18n-ph="pa_ind_ph"><input type="text" id="ind3" maxlength="150" data-i18n-ph="pa_ind_ph"></div></div>
+          <div><span class="f-label"><span data-i18n="pa_vis">Como seus dados aparecem</span> <span class="req">*</span></span>
+            <div class="cards" role="radiogroup" aria-label="Como seus dados aparecem" data-i18n-aria="pa_vis">
+              <label class="rc"><input type="radio" name="vis" value="mapa"><div><b data-i18n="pa_vis_mapa">Pode me mostrar no mapa da rede</b><span data-i18n="pa_vis_mapa_d">Nome, cargo, organização, propósito, temas, comunidades, fios e oferta. O contato nunca aparece.</span></div></label>
+              <label class="rc"><input type="radio" name="vis" value="fora"><div><b data-i18n="pa_vis_fora">Fora do mapa</b><span data-i18n="pa_vis_fora_d">Não apareço no site, mas posso ser apresentado a outras pessoas.</span></div></label>
+            </div>
+            <div class="err" id="e-vis" hidden data-i18n="pa_e_vis">Escolha como seus dados aparecem.</div></div>
+          <label class="chk"><input type="checkbox" id="maior"> <span><span data-i18n="pa_maior">Tenho 18 anos ou mais.</span> <span class="req">*</span></span></label>
+          <div class="err" id="e-maior" hidden data-i18n="pa_e_maior">Por enquanto, a rede recebe pessoas com 18 anos ou mais.</div>
+          <p class="privacy" id="privacidade"></p>
+          <p hidden><label>Não preencha <input id="bot" tabindex="-1" autocomplete="off"></label></p>
+        </div>
+      </fieldset>
+
+      <div id="envioMsg" aria-live="polite"></div>
+      <div class="nav" id="nav">
+        <button type="button" class="btn ghost" id="exemplo" hidden data-i18n="pa_exemplo">Preencher com exemplo</button>
+        <div style="display:flex;gap:8px;margin-left:auto">
+          <button type="button" class="btn line" id="prev" data-i18n="pa_voltar_passo">Voltar</button>
+          <button type="submit" class="btn" id="next"></button>
+        </div>
+      </div>
+    </form>
+
+    <section class="panel done" id="done" hidden>
+      <p class="stepno" data-i18n="pa_recebido">Recebido</p>
+      <h3 id="doneTitle"></h3>
+      <p class="hint" id="doneText"></p>
+      <div id="doneLocal"></div>
+      <div class="next">
+        <a href="./"><span><b data-i18n="pa_ver_mapa">Ver o mapa da rede</b><small data-i18n="pa_ver_mapa_d">Quem já está, por comunidade, tema e atuação.</small></span><span aria-hidden="true">→</span></a>
+        <a href="./#mural"><span><b data-i18n="pa_ver_mural">Ver o mural de ofertas e pedidos</b><small data-i18n="pa_ver_mural_d">Talvez você possa ajudar alguém hoje.</small></span><span aria-hidden="true">→</span></a>
+      </div>
+      <div class="first">
+        <p class="stepno" style="margin:0 0 4px" data-i18n="pa_primeiro_fio">Seu primeiro fio</p>
+        <p data-i18n="pa_primeiro_fio_t">Pense em duas pessoas que você conhece e que deveriam se conhecer. Apresente uma à outra hoje, por mensagem ou e-mail. É assim que uma rede começa a se tecer sozinha.</p>
+      </div>
+      <p class="f-label" style="margin-top:20px" data-i18n="pa_convide">Convide sua comunidade</p>
+      <div class="copy"><input type="text" id="share" readonly aria-label="Link do convite" data-i18n-aria="pa_convide"><button class="btn line" type="button" id="copyBtn" data-i18n="pa_copiar">Copiar</button></div>
+      <p class="help" id="copied" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <aside aria-label="Prévia do seu card" data-i18n-aria="pa_previa">
+    <p class="ptitle" data-i18n="pa_previa">Como você vai aparecer no mapa</p>
+    <div class="card" id="card"></div>
+    <p class="help ex" data-i18n="pa_previa_dica">A prévia muda enquanto você preenche. É o mesmo conteúdo que as pessoas veem ao clicar no seu nome no mapa.</p>
+  </aside>
+</div>
+
+<script src="i18n.js"></script>
+<script src="data.js"></script>
+<script src="participar.js"></script>
+</body>
+</html>

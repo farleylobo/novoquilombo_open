@@ -23,15 +23,17 @@ async function teste(nome, fn) {
   try { await fn(); ok++; console.log('  ✓', nome); }
   catch (e) { falhas++; console.log('  ✗', nome, '\n    ', e.message.split('\n')[0]); }
 }
-async function pagina({ w = 1400, h = 860, query = '', hash = '', locale = 'pt-BR' } = {}) {
+async function pagina({ w = 1400, h = 860, query = '', hash = '', locale = 'pt-BR', arquivo = SITE, pronto = 'RNQ_APP' } = {}) {
   const p = await browser.newPage({ viewport: { width: w, height: h }, locale });
   p.erros = [];
   p.on('pageerror', e => p.erros.push(e.message));
   await p.route('**fonts.g*/**', r => r.abort());
-  await p.goto('file://' + SITE + query + hash);
-  await p.waitForFunction(() => window.RNQ_APP);
+  await p.goto('file://' + arquivo + query + hash);
+  await p.waitForFunction(n => window[n], pronto);
   return p;
 }
+const PARTICIPAR = path.join(RAIZ, 'site', 'participar.html');
+const participar = (o = {}) => pagina({ ...o, arquivo: PARTICIPAR, pronto: 'RNQ_PARTICIPAR' });
 
 console.log('Site (e2e)');
 const DADOS = JSON.parse(fs.readFileSync(path.join(RAIZ, 'site', 'rnq-publico.json'), 'utf8'));
@@ -198,7 +200,7 @@ await teste('celular: sem rolagem horizontal no mapa e no mural', async () => {
 await teste('noindex e formulários Netlify declarados', async () => {
   const html = fs.readFileSync(SITE, 'utf8');
   assert.match(html, /<meta name="robots" content="noindex, nofollow">/);
-  for (const f of ['sugestao-ligacao', 'opt-out', 'opt-in', 'perfil', 'mural', 'mural-resposta', 'iniciativa', 'iniciativa-participar'])
+  for (const f of ['sugestao-ligacao', 'opt-out', 'opt-in', 'perfil', 'mural', 'mural-resposta', 'iniciativa', 'iniciativa-participar', 'participar'])
     assert.match(html, new RegExp(`<form name="${f}" data-netlify="true"`), `formulário ${f} não declarado`);
 });
 
@@ -360,6 +362,93 @@ await teste('"Sobre os dados" no rodapé e pelo link #sobre (PT e EN)', async ()
   assert.match(await en.textContent('#dlgBody'), /About the data/);
   assert.deepEqual(en.erros, []);
   await en.close();
+});
+
+// ---------------------------------------------------------------- "Faça parte" (participar.html)
+await teste('Faça parte: link no mapa e página carrega com as listas do mapa', async () => {
+  const m = await pagina();
+  assert.equal(await m.getAttribute('#lnkFacaParte', 'href'), 'participar.html');
+  await m.close();
+  const p = await participar();
+  assert.equal(await p.locator('#steps li').count(), 5);
+  assert.equal(await p.locator('#temas .chip').count(), DADOS.listas.temas.length + 1);   // + Outro
+  assert.equal(await p.locator('#comunidades .chip').count(), DADOS.listas.comunidades.length + 1);
+  assert.match(await p.textContent('#comunidades'), /A Gente Muda/);
+  assert.doesNotMatch(await p.textContent('#comunidades'), /Youth Climate|Fito/);
+  if (DADOS.sobre.contato) assert.match(await p.textContent('#privacidade'), new RegExp(DADOS.sobre.contato));
+  assert.doesNotMatch(await p.textContent('body'), /a definir/);
+  assert.deepEqual(p.erros, []);
+  await p.screenshot({ path: path.join(FOTOS, '15-participar.png') });
+  await p.close();
+});
+
+await teste('Faça parte: valida, limita escolhas e envia tudo em português', async () => {
+  const p = await participar({ query: '?lang=en&origem=convite' });
+  await p.click('#next');
+  assert.ok(await p.isVisible('#e-nome')); assert.ok(await p.isVisible('#e-contato'));
+  await p.fill('#nome', 'Teste Cadastro'); await p.fill('#contato', 'teste@exemplo.org');
+  await p.fill('#linkedin', 'linkedin.com/in/teste'); await p.fill('#proposito', 'Cuidar de redes.');
+  await p.selectOption('#bdia', '5'); await p.selectOption('#bmes', '9');
+  await p.click('#next');
+  await p.click('#next');
+  assert.ok(await p.isVisible('#e-temas'), 'tema é obrigatório');
+  const temas = p.locator('#temas .chip');
+  for (let i = 0; i < 8; i++) await temas.nth(i).click({ force: true });
+  assert.equal(await p.locator('#temas .chip[aria-pressed="true"]').count(), 7, 'no máximo 7 temas');
+  await p.locator('#comunidades .chip').first().click();
+  await p.locator('#atuacao .chip').first().click();
+  await p.selectOption('#necessidade', { index: 2 });
+  await p.click('#next');
+  await p.locator('#ofertas .chip').first().click(); await p.fill('#pedido', 'Conhecer quem faz agrofloresta.');
+  await p.click('#next');
+  await p.check('input[name=abertura][value=tecer]');
+  assert.ok(await p.isVisible('#fiosBox'));
+  const fios = p.locator('#fios .fio');
+  for (let i = 0; i < 5; i++) await fios.nth(i).click({ force: true });
+  assert.equal(await p.locator('#fios .fio[aria-pressed="true"]').count(), 4, 'no máximo 4 fios');
+  await p.click('#next');
+  await p.fill('#ind1', 'Fulana Indicada');
+  await p.click('#next');
+  assert.ok(await p.isVisible('#e-vis')); assert.ok(await p.isVisible('#e-maior'));
+  await p.check('input[name=vis][value=mapa]'); await p.check('#maior');
+  const c = await p.evaluate(() => window.RNQ_PARTICIPAR.campos());
+  assert.equal(c.temas.split('; ').length, 7);
+  assert.equal(c.temas.split('; ')[0], DADOS.listas.temas[0].nome, 'tema vai em português mesmo com a página em inglês');
+  assert.equal(c.comunidades, DADOS.listas.comunidades[0].nome);
+  assert.equal(c.fios.split('; ')[0], DADOS.listas.fios[0].nome);
+  assert.equal(c.ofertas, 'Facilitar um círculo de conversa');
+  assert.equal(c.aniversario, '05/09'); assert.equal(c.idioma, 'en'); assert.equal(c.origem, 'convite');
+  assert.equal(c.visibilidade, 'mapa'); assert.equal(c.maior_18, 'sim'); assert.equal(c.objetivo, 'tecer');
+  assert.match(await p.textContent('#card'), /Teste Cadastro/);
+  await p.screenshot({ path: path.join(FOTOS, '16-participar-en.png') });
+  await p.click('#next');
+  await p.locator('#done').waitFor({ state: 'visible' });
+  assert.match(await p.textContent('#done'), /So glad to have you in the network, Teste/);
+  assert.match(await p.textContent('#doneLocal'), /Local preview/);
+  assert.deepEqual(p.erros, []);
+  await p.close();
+});
+
+await teste('Faça parte: trocar de idioma no meio mantém as respostas', async () => {
+  const p = await participar();
+  await p.fill('#nome', 'Ana Troca');
+  await p.click('#next'); await p.fill('#contato', 'a@b.org'); await p.click('#next');
+  await p.locator('#temas .chip').nth(1).click();
+  await p.click('.lang button[data-lang="en"]');
+  assert.equal(await p.inputValue('#nome'), 'Ana Troca');
+  assert.equal(await p.locator('#temas .chip[aria-pressed="true"]').count(), 1);
+  assert.equal(await p.textContent('#temas .chip[aria-pressed="true"]'), DADOS.listas.temas[1].nome_en);
+  assert.equal(await p.evaluate(() => window.RNQ_PARTICIPAR.passo), 1);
+  assert.match(await p.textContent('.stepno:visible'), /Step 2 of 5/);
+  await p.close();
+});
+
+await teste('Faça parte: celular sem rolagem horizontal', async () => {
+  const p = await participar({ w: 390, h: 820 });
+  const [sw, iw] = await p.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
+  assert.ok(sw <= iw + 1, `rolagem horizontal: ${sw} > ${iw}`);
+  await p.screenshot({ path: path.join(FOTOS, '17-participar-celular.png'), fullPage: true });
+  await p.close();
 });
 
 await browser.close();

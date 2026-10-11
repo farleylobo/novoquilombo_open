@@ -17,6 +17,29 @@ COMUNIDADE_PARA_TEMA = {
     'Colaboracao Internacional': 'Colaboração internacional',
 }
 
+# Comunidades que entram pelo formulário "Faça parte" (participar.html) além das da planilha de seleção
+# (Farley, 11/10/2026). Ficam disponíveis no formulário e aparecem no mapa quando alguém do mapa participa.
+COMUNIDADES_NOVAS = ['A Gente Muda', 'Guerreiros Sem Armas', 'Antroposofia, Teosofia e afins', 'Espiritualidade & Religião']
+
+# Fios de tecelagem (formulário "Faça parte", passo 4): até 4 por pessoa; aparecem no card.
+FIOS = [
+    ('visao', 'Visão', 'Para onde estamos olhando?', 'Vision', 'Where are we looking?'),
+    ('escuta', 'Escuta', 'O que ainda não foi dito?', 'Listening', 'What has not been said yet?'),
+    ('roda', 'Roda', 'Há espaço para todos respirarem?', 'Circle', 'Is there room for everyone to breathe?'),
+    ('mapeamento', 'Mapeamento', 'Quem ainda não foi visto?', 'Mapping', 'Who has not been seen yet?'),
+    ('enraizamento', 'Enraizamento', 'Onde isso pisa no chão?', 'Rooting', 'Where does this touch the ground?'),
+    ('cultivo', 'Cultivo', 'O que plantamos e quando colhemos?', 'Cultivation', 'What do we plant, and when do we harvest?'),
+    ('conexao', 'Conexão', 'Quem precisa conhecer quem?', 'Connection', 'Who needs to meet whom?'),
+    ('fronteira', 'Fronteira', 'O que estamos evitando olhar?', 'Edge', 'What are we avoiding looking at?'),
+    ('mediacao', 'Mediação', 'O que precisa ser reparado?', 'Mediation', 'What needs to be repaired?'),
+    ('cuidado', 'Cuidado', 'Quem está sozinho?', 'Care', 'Who is alone?'),
+    ('acolhida', 'Acolhida', 'Como as pessoas chegam e como partem?', 'Welcome', 'How do people arrive, and how do they leave?'),
+    ('memoria', 'Memória', 'O que precisa ser lembrado?', 'Memory', 'What needs to be remembered?'),
+]
+MAX_FIOS = 4
+MAX_TEMAS_CADASTRO = 7
+LIM_PROPOSITO = 432
+
 # Tema (já renomeado) -> comunidade que o absorve
 TEMA_PARA_COMUNIDADE = {
     'Tecnologia, produto & dados': 'Tecnologia',
@@ -58,6 +81,10 @@ NOMES_EN = {
     'Tecnologia': 'Technology',
     'ESG': 'ESG',
     'Teoria U': 'Theory U',
+    'A Gente Muda': 'A Gente Muda',
+    'Guerreiros Sem Armas': 'Guerreiros Sem Armas (Warriors Without Weapons)',
+    'Antroposofia, Teosofia e afins': 'Anthroposophy, Theosophy & related',
+    'Espiritualidade & Religião': 'Spirituality & Religion',
     # temas
     'Liderança & cultura organizacional': 'Leadership & organizational culture',
     'Desenvolvimento interior & presença': 'Inner development & presence',
@@ -98,7 +125,7 @@ HUB_NOME = 'Farley Lobo'
 
 # Lista fechada de campos públicos (RF3). O export falha se aparecer qualquer outro.
 CAMPOS_PESSOA = {'id', 'nome', 'cargo', 'organizacao', 'comunidades', 'temas', 'atuacao', 'linkedin',
-                 'papeis', 'compartilha', 'aprende', 'convoca', 'conhecer'}
+                 'papeis', 'compartilha', 'aprende', 'convoca', 'conhecer', 'proposito', 'fios'}
 CAMPOS_MURAL = {'id', 'tipo', 'titulo', 'descricao', 'areas', 'autor', 'autor_id', 'data', 'status'}
 CAMPOS_INICIATIVA = {'id', 'tipo', 'titulo', 'descricao', 'areas', 'participantes', 'precisa',
                      'proponente', 'proponente_id', 'data', 'status'}
@@ -106,7 +133,10 @@ CAMPOS_LIGACAO = {'a', 'b', 'origem'}
 CAMPOS_GRUPO = {'id', 'nome', 'nome_en'}                      # comunidades, temas, atuações
 CAMPOS_PAPEL = {'id', 'nome', 'nome_en', 'desc', 'desc_en'}
 CAMPOS_TOPO = {'versao', 'gerado_em', 'comunidades', 'temas', 'atuacoes', 'papeis', 'pessoas',
-               'ligacoes', 'mural', 'iniciativas', 'estatisticas', 'sobre'}
+               'ligacoes', 'mural', 'iniciativas', 'estatisticas', 'sobre', 'listas'}
+# Listas completas oferecidas no formulário "Faça parte" (não só as já usadas no mapa)
+CAMPOS_LISTAS = {'temas', 'comunidades', 'atuacoes', 'fios'}
+CAMPOS_FIO = {'id', 'nome', 'nome_en', 'pergunta', 'pergunta_en'}
 CAMPOS_SOBRE = {'responsavel', 'contato'}
 
 # "Sobre os dados" (LGPD): quem responde pelo mapa e o e-mail para pedidos de correção ou remoção.

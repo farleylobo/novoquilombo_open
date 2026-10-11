@@ -45,7 +45,7 @@ Depois, ele monta uma pasta só com os arquivos que podem ir ao ar, em `_trabalh
 
 ## Depois da primeira publicação
 
-- **Netlify → Forms:** confira se os 8 formulários aparecem: `mural`, `mural-resposta`, `perfil`, `sugestao-ligacao`, `opt-out`, `opt-in`, `iniciativa` e `iniciativa-participar`.
+- **Netlify → Forms:** confira se os 9 formulários aparecem: `mural`, `mural-resposta`, `perfil`, `sugestao-ligacao`, `opt-out`, `opt-in`, `iniciativa`, `iniciativa-participar` e `participar` (o "Faça parte").
 - **Forms → Form notifications → Add notification → Email:** cadastre o seu e-mail e o de quem modera junto.
 - **Teste:** publique algo no mural pelo site e rode `python3 atualizar.py`. O envio deve aparecer na planilha de tecelagem.
 

@@ -73,6 +73,23 @@ ABAS = {
         ('ID da iniciativa', 14, 'auto', None), ('Iniciativa', 30, 'auto', None), ('Nome', 24, 'auto', None),
         ('Contato (privado)', 26, 'privado', None), ('Mensagem', 44, 'auto', None),
         ('Encaminhado?', 12, 'editar', SN)]),
+    'Cadastros': ('participar', [
+        ('ID', 14, 'auto', None), ('Recebido em', 17, 'auto', None),
+        ('Nome', 26, 'editar', None), ('Respondendo por', 14, 'auto', None),
+        ('Cargo', 24, 'editar', None), ('Organização', 24, 'editar', None), ('LinkedIn', 26, 'editar', None),
+        ('Site da organização', 24, 'editar', None), ('Tipo de organização', 18, 'editar', None),
+        ('Contato (privado)', 26, 'privado', None), ('Cidade (privado)', 18, 'privado', None),
+        ('Aniversário (privado)', 12, 'privado', None),
+        ('Propósito', 44, 'editar', None), ('Temas', 40, 'editar', None), ('Tema novo sugerido', 22, 'interno', None),
+        ('Atuação', 30, 'editar', None), ('Comunidades', 34, 'editar', None),
+        ('Comunidade nova sugerida', 22, 'interno', None),
+        ('Quer se aproximar de (privado)', 30, 'privado', None), ('Necessidade do território', 26, 'interno', None),
+        ('Ofertas', 34, 'editar', None), ('Oferta (texto)', 40, 'editar', None), ('Pedido', 40, 'interno', None),
+        ('Mural autorizado?', 10, 'auto', None), ('Objetivo', 16, 'interno', None), ('Fios', 30, 'editar', None),
+        ('Formatos', 30, 'interno', None), ('Indicações (privado)', 40, 'privado', None),
+        ('Visibilidade', 14, 'auto', None), ('18 anos ou mais', 10, 'auto', None), ('Idioma', 8, 'auto', None),
+        ('Origem', 12, 'auto', None),
+        ('Incluir no mapa?', 10, 'editar', SN), ('Observação interna', 30, 'interno', None)]),
     'Apresentações': (None, [
         ('Data', 12, 'editar', None), ('Pessoa A', 26, 'editar', None), ('Pessoa B', 26, 'editar', None),
         ('Motivo', 44, 'editar', None), ('Feita por', 20, 'editar', None),
@@ -108,6 +125,17 @@ FORMULARIOS = {
                                    'areas': 'Áreas', 'participantes': 'Participantes', 'precisa': 'Precisa de',
                                    'nome': 'Nome de quem propôs', 'contato': 'Contato (privado)'},
                    {'Status': 'Ativa'}),
+    'participar': ('Cadastros', {
+        'nome': 'Nome', 'quem': 'Respondendo por', 'cargo': 'Cargo', 'organizacao': 'Organização',
+        'linkedin': 'LinkedIn', 'org_site': 'Site da organização', 'org_tipo': 'Tipo de organização',
+        'contato': 'Contato (privado)', 'local': 'Cidade (privado)', 'aniversario': 'Aniversário (privado)',
+        'proposito': 'Propósito', 'temas': 'Temas', 'tema_outro': 'Tema novo sugerido', 'atuacao': 'Atuação',
+        'comunidades': 'Comunidades', 'comunidade_outra': 'Comunidade nova sugerida',
+        'quer_orgs': 'Quer se aproximar de (privado)', 'necessidade': 'Necessidade do território',
+        'ofertas': 'Ofertas', 'oferta': 'Oferta (texto)', 'pedido': 'Pedido', 'mural': 'Mural autorizado?',
+        'objetivo': 'Objetivo', 'fios': 'Fios', 'formatos': 'Formatos', 'indicacoes': 'Indicações (privado)',
+        'visibilidade': 'Visibilidade', 'maior_18': '18 anos ou mais', 'idioma': 'Idioma', 'origem': 'Origem'},
+        {}),
     'iniciativa-participar': ('Participações', {'iniciativa_id': 'ID da iniciativa', 'iniciativa_titulo': 'Iniciativa',
                                                 'nome': 'Nome', 'contato': 'Contato (privado)',
                                                 'mensagem': 'Mensagem'}, {}),
@@ -130,6 +158,8 @@ COMO_USAR = [
     ('Confirmações ..... quem clicou "Sim, quero ficar no mapa".', False),
     ('Iniciativas ...... projetos, encontros e grupos de prática propostos. "Publicar?" = Sim publica.', False),
     ('Participações .... quem quer entrar numa iniciativa. Encaminhe para quem propôs e marque "Encaminhado?".', False),
+    ('Cadastros ........ respostas ao "Faça parte". "Incluir no mapa?" = Sim põe a pessoa no mapa (se ela escolheu', False),
+    ('                   aparecer e tem 18+). Oferta e pedido autorizados também chegam na aba Mural para revisar.', False),
     ('Apresentações .... seu diário de tecelagem. Registre cada apresentação e o status.', False),
     ('                   Apresentadas / Acompanhando / Colaborando = as duas pessoas passam a aparecer ligadas.', False),
     ('Papéis ........... selos públicos de papel na rede (Network Weaver Handbook). Só com o OK da pessoa.', False),
@@ -284,10 +314,46 @@ def adicionar_envios(caminho, envios):
         _anexar(wb[aba], ABAS[aba][1], valores)
         vistos[aba].add(eid)
         novos[aba] = novos.get(aba, 0) + 1
+        if form == 'participar':
+            for linha in mural_do_cadastro(eid, valores):
+                if linha['ID'] not in vistos['Mural']:
+                    _anexar(wb['Mural'], ABAS['Mural'][1], linha)
+                    vistos['Mural'].add(linha['ID'])
+                    novos['Mural'] = novos.get('Mural', 0) + 1
     if novos:
         backup(caminho)
         wb.save(caminho)
     return novos
+
+
+def _titulo(texto, limite=90):
+    t = txt(texto).split('\n')[0]
+    for sep in ('. ', '; '):
+        if sep in t:
+            t = t.split(sep)[0]
+    return t if len(t) <= limite else t[:limite - 1].rstrip() + '…'
+
+
+def mural_do_cadastro(eid, c):
+    """Oferta e pedido do "Faça parte" viram itens do Mural (sem "Publicar?": a moderação decide),
+    só quando a pessoa autorizou o mural."""
+    if txt(c.get('Mural autorizado?')).lower() not in ('sim', 'yes', 'true', 'on'):
+        return []
+    areas = '; '.join([a for a in [x.strip() for x in txt(c.get('Temas')).split(';')] if a][:3])
+    no_mapa = c.get('Nome') if txt(c.get('Visibilidade')).lower() == 'mapa' else None
+    base = {'Áreas': areas, 'Nome': c.get('Nome'), 'Contato (privado)': c.get('Contato (privado)'),
+            'Está no mapa como': no_mapa, 'Status': 'Aberto', 'Recebido em': c.get('Recebido em'),
+            'Observação interna': 'Veio do cadastro "Faça parte" (aba Cadastros)'}
+    out = []
+    ofertas, texto = txt(c.get('Ofertas')), txt(c.get('Oferta (texto)'))
+    if ofertas or texto:
+        titulo = _titulo(texto) if texto else 'Ofereço: ' + ofertas.replace(';', ',')
+        out.append(dict(base, ID=eid + '-oferta', Tipo='Oferta', **{'Título': _titulo(titulo),
+                   'Descrição': '; '.join(x for x in (texto, ofertas if texto else '') if x)}))
+    if txt(c.get('Pedido')):
+        out.append(dict(base, ID=eid + '-pedido', Tipo='Pedido', **{'Título': _titulo(c.get('Pedido')),
+                   'Descrição': txt(c.get('Pedido'))}))
+    return out
 
 
 def _quando(v):

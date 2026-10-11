@@ -75,9 +75,9 @@ class TextosDoSite(unittest.TestCase):
     def test_chaves_usadas_existem(self):
         pt = self.chaves('pt')
         usadas = set()
-        for arq in ('app.js', 'index.html'):
+        for arq in ('app.js', 'index.html', 'participar.js', 'participar.html'):
             s = (SITE / arq).read_text(encoding='utf-8')
-            usadas |= set(re.findall(r"\bt\('([^']+)'", s))
+            usadas |= set(re.findall(r"\bt\('([^']+)'\s*[,)]", s))
             usadas |= set(re.findall(r'data-i18n(?:-ph|-aria)?="([^"]+)"', s))
             usadas |= {c for c in re.findall(r"dica\('([^']+)'\)", s)}
         usadas = {u for u in usadas if not u.endswith('_') and u not in ('tipo:',)}

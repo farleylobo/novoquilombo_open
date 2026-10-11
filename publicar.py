@@ -28,7 +28,8 @@ from rnq import netlify  # noqa: E402
 SITE = os.path.join(AQUI, 'site')
 PASTA = os.path.join(AQUI, '_trabalho', 'publicar')
 PUBLICAR = ['index.html', 'app.js', 'app.css', 'i18n.js', 'demo.js', 'data.js', 'robots.txt', 'netlify.toml', '_headers',
-            'vendor/d3.min.js', 'vendor/3d-force-graph.min.js', 'vendor/LICENSES.txt']
+            'vendor/d3.min.js', 'vendor/3d-force-graph.min.js', 'vendor/LICENSES.txt',
+            'participar.html', 'participar.js', 'participar.css', 'img/olho-horus.png']
 MARCA_EXEMPLO = os.path.join(SITE, '.exemplo')
 
 

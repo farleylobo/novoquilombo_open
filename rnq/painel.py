@@ -59,6 +59,7 @@ def pendencias(tec):
         ('Ligações sugeridas', 'ligações esperando "Aprovar?"', contar('Ligações sugeridas', 'Aprovar?', vazio)),
         ('Iniciativas', 'iniciativas esperando "Publicar?"', contar('Iniciativas', 'Publicar?', vazio)),
         ('Participações', 'pedidos de participação não encaminhados', contar('Participações', 'Encaminhado?', nao_sim)),
+        ('Cadastros', 'cadastros do "Faça parte" esperando "Incluir no mapa?"', contar('Cadastros', 'Incluir no mapa?', vazio)),
         ('Saídas', 'pedidos de saída (já aplicados)', contar('Saídas', 'Remover?', lambda v: not nao(v))),
     ]
 

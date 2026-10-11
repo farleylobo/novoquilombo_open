@@ -21,6 +21,7 @@ o que oferece e o que precisa — e um conjunto de ferramentas para **tecer** a 
 |---|---|---|
 | Quem abre o link | Mapa de **pessoas**, **organizações** e **3D**, agrupado por comunidade, tema ou atuação | `site/` |
 | Quem abre o link | **Mural de ofertas e pedidos**, **Iniciativas** (projetos, encontros, grupos de prática), **Como participar** | `site/` |
+| Quem quer entrar | **Faça parte**: cadastro em 5 passos (PT/EN) com prévia do card; cai na aba Cadastros para moderação | `site/participar.html` |
 | Quem abre o link | No card: perfil ("posso compartilhar / quero aprender"), papéis na rede, "Pode ser bom conhecer", "Eu conheço essa pessoa", ficar/sair do mapa | `site/` |
 | Farley e quem tece junto | **Planilha de tecelagem**: moderação de tudo que chega pelo site, diário de apresentações, papéis, correções | `RNQ-tecelagem.xlsx` |
 | Farley e quem tece junto | **Painel do tecelão**: fase da rede, dependência do hub, apresentações sugeridas com mensagem pronta, fila de moderação, pedidos sem resposta | `painel/painel-tecelagem.html` |

@@ -35,6 +35,8 @@ function nomearGrupos() {   // nomes no idioma atual (nome_en vem dos dados)
 }
 nomearGrupos();
 const papelPorId = Object.fromEntries(D.papeis.map(p => [p.id, p]));
+const fioPorId = Object.fromEntries(((D.listas || {}).fios || []).map(f => [f.id, f]));
+const fiosDe = p => (p.fios || []).map(id => fioPorId[id]).filter(Boolean);
 // áreas = comunidades + temas (usadas no mural e nas iniciativas). O valor guardado é sempre o nome em PT.
 const AREAS = D.comunidades.map(c => ({ nome: c.nome, tipo: 'comunidades', id: c.id }))
   .concat(D.temas.map(x => ({ nome: x.nome, tipo: 'temas', id: x.id })));
@@ -240,7 +242,9 @@ function cardPessoa(p) {
   return `<p class="kind">${t('pessoa')}</p><h3>${esc(p.nome)}</h3>
     ${papeis.length ? `<div class="badges">${papeis.map(x => `<span class="badge" title="${esc(window.I18N.desc(x))}">${esc(nomeDe(x))}</span>`).join('')}</div>` : ''}
     <p class="role">${esc([p.cargo, p.organizacao].filter(Boolean).join(' · '))}</p>
+    ${p.proposito ? `<p class="prop">${esc(p.proposito)}</p>` : ''}
     ${blocos(p.comunidades || [], p.temas || [], p.atuacao || [])}
+    ${fiosDe(p).length ? `<div class="blk"><h4>${t('fios_tece')}</h4><div class="chips">${fiosDe(p).map(f => `<span class="chip soft" title="${esc(I18N.lang === 'en' ? f.pergunta_en : f.pergunta)}">${esc(nomeDe(f))}</span>`).join('')}</div></div>` : ''}
     ${perfil.map(([t, v]) => `<div class="blk"><h4>${t}</h4><p class="plain">${esc(v)}</p></div>`).join('')}
     ${meus.length ? `<div class="blk"><h4>${t('no_mural')}</h4><ul class="people">${meus.map(m => `<li><button class="linkbtn" data-item="${esc(m.id)}">${m.tipo === 'oferta' ? t('oferece') : t('pede')}: ${esc(m.titulo)}</button></li>`).join('')}</ul></div>` : ''}
     ${inis.length ? `<div class="blk"><h4>${t('ini_titulo')}</h4><ul class="people">${inis.map(i => `<li><button class="linkbtn" data-ini="${esc(i.id)}">${esc(i.titulo)}</button></li>`).join('')}</ul></div>` : ''}
@@ -534,7 +538,7 @@ function dlgParticipar(i) {
 function dlgComoParticipar() {
   abrir(`<h3 id="dlgTitle">${t('btn_participar')}</h3>
     ${t('como_html')}
-    <div class="row"><button class="btn" onclick="fechar()">${t('entendi')}</button></div>`);
+    <div class="row"><a class="btn line" href="participar.html">${t('btn_faca_parte')}</a><button class="btn" onclick="fechar()">${t('entendi')}</button></div>`);
 }
 $('btnParticipar').onclick = dlgComoParticipar;
 
@@ -593,7 +597,10 @@ if (DEMO) { $('demoBanner').hidden = false; $('demoSair').href = './' + (new URL
 // idioma: botão PT | EN no cabeçalho. Troca tudo no lugar, sem recarregar e sem perder a visão aberta.
 window.I18N.aplicar();
 document.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => window.I18N.definir(b.dataset.lang));
+const linkFacaParte = () => { $('lnkFacaParte').href = 'participar.html' + (window.I18N.lang === 'en' ? '?lang=en' : ''); };
+linkFacaParte();
 window.I18N.aoMudar(() => {
+  linkFacaParte();
   nomearGrupos(); filtrosArea();
   if (dlg.open) fechar();
   rebuild();

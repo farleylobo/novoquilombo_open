@@ -27,6 +27,14 @@ def link_seguro(url, avisos, quem):
     return None
 
 
+def _url(v):
+    """'linkedin.com/in/x' (como as pessoas digitam no formulário) -> 'https://linkedin.com/in/x'."""
+    u = txt(v)
+    if u and not u.lower().startswith(('http://', 'https://')) and '.' in u and ' ' not in u and ':' not in u:
+        return 'https://' + u
+    return u
+
+
 def _lista(ordem, usados):
     vistos, out = set(), []
     for n in list(ordem) + sorted(usados):
@@ -88,6 +96,10 @@ def montar(selecao, temas_info, tec, agora=None):
 
     # ---- 3. pessoas
     validas = [c for c in selecao['comunidades'] if c not in C.EXCLUIR_COMUNIDADES]
+    validas += [c for c in C.COMUNIDADES_NOVAS if c not in validas]
+    ordem_t = [C.RENOMEAR_TEMA.get(t, t) for t in temas_info.get('ordem_temas', [])]
+    ordem_t = [t for t in ordem_t if t not in C.TEMA_PARA_COMUNIDADE] + list(C.COMUNIDADE_PARA_TEMA.values())
+    ordem_t = list(dict.fromkeys(ordem_t))
     cls = temas_info.get('por_chave', {})
     if not temas_info.get('existe'):
         avisos.append('RNQ-temas-atuacao.xlsx não encontrado: site sai sem temas e atuação')
@@ -137,12 +149,87 @@ def montar(selecao, temas_info, tec, agora=None):
             'atuacao': [slug(a) for a in atu],
             'linkedin': link_seguro(c.get('linkedin', p['linkedin']), avisos, nome),
             'papeis': [], 'compartilha': None, 'aprende': None, 'convoca': None, 'conhecer': [],
+            'proposito': None, 'fios': [],
+            '_temas': todos, '_coms': coms, '_atu': atu,
+        })
+
+    # ---- 3b. cadastros do "Faça parte" aprovados pela moderação ("Incluir no mapa?" = Sim)
+    fio_por_nome = {chave_nome(f[1]): f[0] for f in C.FIOS}
+    atu_ok = set(temas_info.get('ordem_atuacao', []))
+    nomes_cadastro = set()
+    for r in tec.get('Cadastros', []):
+        nome = txt(r.get('Nome'))
+        if not nome or not sim(r.get('Incluir no mapa?')):
+            continue
+        onde = f'Cadastros ({nome})'
+        nomes_cadastro.add(chave_nome(nome))
+        if chave_nome(nome) in sair:
+            continue
+        if chave_nome(r.get('Visibilidade')) not in ('mapa', ''):
+            avisos.append(f'{onde}: a pessoa escolheu ficar fora do mapa — não incluída')
+            continue
+        if not sim(r.get('18 anos ou mais')):
+            avisos.append(f'{onde}: sem a confirmação de 18 anos ou mais — não incluída')
+            continue
+        coms, todos, atu = [], [], []
+        for t in dividir_areas(r.get('Temas')):
+            t = C.RENOMEAR_TEMA.get(t, t)
+            if t in C.TEMA_PARA_COMUNIDADE:
+                coms.append(C.TEMA_PARA_COMUNIDADE[t])
+            elif t in ordem_t:
+                todos.append(t)
+            else:
+                avisos.append(f'{onde}: tema "{t}" não existe no mapa (ignorado)')
+        for com in dividir_areas(r.get('Comunidades')):
+            if com in C.COMUNIDADE_PARA_TEMA:
+                todos.append(C.COMUNIDADE_PARA_TEMA[com])
+            elif com in validas and com not in C.EXCLUIR_COMUNIDADES:
+                coms.append(com)
+            else:
+                avisos.append(f'{onde}: comunidade "{com}" não existe no mapa (ignorada)')
+        for a in dividir_areas(r.get('Atuação')):
+            if a in atu_ok:
+                atu.append(a)
+            else:
+                avisos.append(f'{onde}: atuação "{a}" não existe no mapa (ignorada)')
+        fios = [fio_por_nome[chave_nome(f)] for f in dividir_areas(r.get('Fios')) if chave_nome(f) in fio_por_nome]
+        fios = list(dict.fromkeys(fios))[:C.MAX_FIOS]
+        proposito = publico_txt(r.get('Propósito'), C.LIM_PROPOSITO, onde) or None
+        oferece = '; '.join(x for x in dividir_areas(r.get('Ofertas')) + [txt(r.get('Oferta (texto)'))] if x)
+        compartilha = publico_txt(oferece, C.LIM_PERFIL, onde) or None
+        pid = idx.achar(nome)
+        if pid:                                       # já estava no mapa: o cadastro soma ao que existe
+            p = next(x for x in pessoas if x['id'] == pid)
+            for lista, chave, novos in (('_temas', 'temas', todos), ('_coms', 'comunidades', coms), ('_atu', 'atuacao', atu)):
+                for v in novos:
+                    if v not in p[lista]:
+                        p[lista].append(v)
+                        p[chave].append(slug(v))
+            p['proposito'] = proposito or p['proposito']
+            p['fios'] = fios or p['fios']
+            p['compartilha'] = compartilha or p['compartilha']
+            avisos.append(f'{onde}: já estava no mapa — temas, comunidades e propósito do cadastro foram somados')
+            continue
+        coms, todos, atu = list(dict.fromkeys(coms)), list(dict.fromkeys(todos)), list(dict.fromkeys(atu))
+        if not coms:
+            avisos.append(f'{nome}: sem comunidade')
+        pid = slug(nome)
+        if any(x['id'] == pid for x in pessoas):
+            pid = f'{pid}-{slug(txt(r.get("ID")))[-6:] or len(pessoas)}'
+        idx.add(nome, pid)
+        pessoas.append({
+            'id': pid, 'nome': nome, 'cargo': txt(r.get('Cargo')) or None,
+            'organizacao': txt(r.get('Organização')) or None,
+            'comunidades': [slug(x) for x in coms], 'temas': [slug(t) for t in todos], 'atuacao': [slug(a) for a in atu],
+            'linkedin': link_seguro(_url(r.get('LinkedIn')), avisos, nome),
+            'papeis': [], 'compartilha': compartilha, 'aprende': None, 'convoca': None, 'conhecer': [],
+            'proposito': proposito, 'fios': fios,
             '_temas': todos, '_coms': coms, '_atu': atu,
         })
     if removidas:
         avisos.append(f'{removidas} pessoa(s) removida(s) por pedido de saída (aba Saídas)')
     nomes_mapa = {chave_nome(p['nome']) for p in selecao['pessoas']} | {
-        chave_nome(c['nome']) for c in corr.values() if c.get('nome')}
+        chave_nome(c['nome']) for c in corr.values() if c.get('nome')} | nomes_cadastro
     for r in tec.get('Saídas', []):
         if txt(r.get('Nome')) and not nao(r.get('Remover?')) and chave_nome(r.get('Nome')) not in nomes_mapa:
             avisos.append(f'Saídas: "{txt(r.get("Nome"))}" não corresponde a ninguém do mapa — confira o nome')
@@ -150,15 +237,22 @@ def montar(selecao, temas_info, tec, agora=None):
 
     comunidades = [{'id': slug(c), 'nome': c} for c in validas
                    if c not in C.COMUNIDADE_PARA_TEMA and any(slug(c) in p['comunidades'] for p in pessoas)]
-    ordem_t = [C.RENOMEAR_TEMA.get(t, t) for t in temas_info.get('ordem_temas', [])]
-    ordem_t = [t for t in ordem_t if t not in C.TEMA_PARA_COMUNIDADE] + list(C.COMUNIDADE_PARA_TEMA.values())
     temas = _lista(ordem_t, {t for p in pessoas for t in p['_temas']})
     atuacoes = _lista(temas_info.get('ordem_atuacao', []), {a for p in pessoas for a in p['_atu']})
     if not C.CONTATO_PRIVACIDADE:
         avisos.append('Sem e-mail de privacidade (rnq/config.py, CONTATO_PRIVACIDADE): preencha antes de publicar')
-    for g in comunidades + temas + atuacoes:          # versão em inglês (botão PT | EN do site)
-        g['nome_en'] = C.NOMES_EN.get(g['nome'])
-        if not g['nome_en']:
+    # listas completas do formulário "Faça parte" (inclui o que ainda não tem ninguém no mapa)
+    listas = {
+        'temas': [{'id': slug(t), 'nome': t} for t in ordem_t],
+        'comunidades': [{'id': slug(c), 'nome': c} for c in validas if c not in C.COMUNIDADE_PARA_TEMA],
+        'atuacoes': [{'id': slug(a), 'nome': a} for a in temas_info.get('ordem_atuacao', [])],
+        'fios': [{'id': i, 'nome': n, 'pergunta': q, 'nome_en': ne, 'pergunta_en': qe} for i, n, q, ne, qe in C.FIOS],
+    }
+    sem_traducao = set()
+    for g in comunidades + temas + atuacoes + listas['temas'] + listas['comunidades'] + listas['atuacoes']:
+        g['nome_en'] = C.NOMES_EN.get(g['nome'])     # versão em inglês (botão PT | EN do site)
+        if not g['nome_en'] and g['nome'] not in sem_traducao:
+            sem_traducao.add(g['nome'])
             avisos.append(f'Sem tradução em inglês: "{g["nome"]}" (acrescente em rnq/config.py, NOMES_EN)')
     areas_validas = {chave_nome(x['nome']): x['nome'] for x in comunidades + temas}
 
@@ -316,6 +410,7 @@ def montar(selecao, temas_info, tec, agora=None):
         'pessoas': pessoas, 'ligacoes': ligs, 'mural': mural, 'iniciativas': iniciativas,
         'estatisticas': estat,
         'sobre': {'responsavel': C.RESPONSAVEL_DADOS, 'contato': C.CONTATO_PRIVACIDADE or None},
+        'listas': listas,
     }
     validar(publico, tec)
     ja = [(idx.achar(r.get('Pessoa A')), idx.achar(r.get('Pessoa B'))) for r in tec.get('Apresentações', [])]
@@ -344,6 +439,11 @@ def validar(publico, tec=None):
             checar(g, C.CAMPOS_GRUPO, f'{k} {g.get("nome")}')
     for x in publico.get('papeis', []):
         checar(x, C.CAMPOS_PAPEL, f'papel {x.get("nome")}')
+    for k, v in publico.get('listas', {}).items():
+        if k not in C.CAMPOS_LISTAS:
+            raise ErroPrivacidade(f'listas: lista não pública {k}')
+        for g in v:
+            checar(g, C.CAMPOS_FIO if k == 'fios' else C.CAMPOS_GRUPO, f'listas/{k}')
     if 'sobre' in publico:
         checar(publico['sobre'], C.CAMPOS_SOBRE, 'sobre')
     if tec:
