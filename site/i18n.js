@@ -1,0 +1,343 @@
+'use strict';
+/* Idiomas do site (PT / EN).
+   - Textos da interface: este arquivo. Chave ausente em EN cai para PT.
+   - Nomes de comunidades, temas, atuação e papéis: vêm dos dados (nome_en / desc_en, gerados por exportar.py
+     a partir de rnq/config.py NOMES_EN).
+   - O que as pessoas escrevem (mural, iniciativas, perfil, cargos) fica no idioma original.
+   Escolha do idioma: ?lang=en|pt > escolha salva no navegador > idioma do navegador (pt* = PT; outros = EN). */
+(function () {
+  const pl = (n, um, varios) => n === 1 ? um : varios;
+  const T = {
+    pt: {
+      titulo: 'Rede Novo Quilombo',
+      tagline: 'Quem está na rede, onde se encontra, com o que trabalha, o que oferece e o que precisa',
+      meta_desc: 'Mapa vivo da Rede Novo Quilombo: quem está na rede, onde se encontra, com o que trabalha, o que oferece e o que precisa.',
+      demo_banner: 'Modo demonstração: itens de exemplo, fictícios, no mural e nas iniciativas.',
+      demo_sair: 'Sair da demonstração',
+      idioma: 'Idioma',
+      visoes: 'Visões',
+      tab_pessoas: 'Pessoas', tab_orgs: 'Organizações', tab_3d: '3D', tab_mural: 'Mural', tab_ini: 'Iniciativas',
+      busca_ph: 'Buscar pessoa ou organização…',
+      busca_nada: 'Ninguém com esse nome no mapa',
+      btn_participar: 'Como participar',
+      agrupar: 'Agrupar por',
+      dim_comunidades: 'Comunidades', dim_temas: 'Temas', dim_atuacao: 'Atuação',
+      dimdesc_comunidades: 'Grupos onde as pessoas se encontram de verdade: encontros, grupos, movimentos.',
+      dimdesc_temas: 'Assuntos em que as pessoas trabalham. Uma pessoa pode ter vários.',
+      dimdesc_atuacao: 'De onde as pessoas atuam: empresa, terceiro setor, academia, setor público…',
+      sem_comunidades: 'Ainda sem comunidade', sem_temas: 'Sem tema', sem_atuacao: 'Sem atuação',
+      stats: s => `${s.p} ${pl(s.p, 'pessoa', 'pessoas')} · ${s.o} ${pl(s.o, 'organização', 'organizações')}<br>${s.c} comunidades · ${s.t} temas<br>${s.l} ${pl(s.l, 'conexão', 'conexões')} entre pessoas<br>${s.pct}% das pessoas já conectadas entre si`,
+      n_pessoas: n => `${n} ${pl(n, 'pessoa', 'pessoas')}`,
+      n_na_rede: n => `${n} ${pl(n, 'pessoa', 'pessoas')} na rede`,
+      mapa_aria: 'Mapa da rede',
+      erro_3d: 'Não foi possível carregar o 3D.',
+      hint_pessoas: 'Clique numa pessoa para ver o perfil · clique num grupo para filtrar',
+      hint_orgs: 'Organizações representadas pelas pessoas da rede · clique para ver quem está nela',
+      hint_3d: 'Arraste para girar · role para zoom · passe o mouse sobre um nó',
+      detalhes: 'Detalhes', fechar: 'Fechar', cancelar: 'Cancelar', enviar: 'Enviar', continuar: 'Continuar',
+      sim: 'Sim', nao: 'Não', entendi: 'Entendi', selecione: 'Selecione…', opcional: '(opcional)',
+      rodape: 'Dados profissionais públicos, reunidos por Farley para mostrar a Rede Novo Quilombo. Inspirado no trabalho de June Holley sobre tecelagem de redes.',
+      sair_link: 'Quero sair do mapa',
+      sobre_link: 'Sobre os dados',
+      sobre_html: s => `<p>Este mapa mostra quem está na Rede Novo Quilombo, onde as pessoas se encontram e com o que trabalham, para facilitar que se conheçam e colaborem.</p>
+    <h4>O que aparece</h4><p>Nome, cargo, organização e link do LinkedIn, ou seja, dados profissionais já públicos. Comunidades, temas e atuação são uma classificação feita pela curadoria da rede. Perfis, ofertas, pedidos e iniciativas só aparecem depois de revisados, e só com o que a própria pessoa enviou.</p>
+    <h4>O que nunca aparece</h4><p>E-mail, telefone ou qualquer contato. O que você escreve nos campos de contato dos formulários fica só com quem modera a rede.</p>
+    <h4>Base e finalidade</h4><p>Legítimo interesse (LGPD, art. 7º, IX), para conectar pessoas de uma rede da qual fazem parte, com saída imediata a qualquer momento.</p>
+    <h4>Seus direitos</h4><p>Você pode sair do mapa sem precisar explicar, em “Quero sair do mapa” (no rodapé ou no seu card), corrigir seus dados em “Atualizar meu perfil” ou pedir qualquer informação sobre o tratamento dos seus dados.</p>
+    <p class="privacy">Responsável: ${s.responsavel}${s.contato ? ` · Contato: <a href="mailto:${s.contato}">${s.contato}</a>` : ''}</p>`,
+      // card
+      pessoa: 'Pessoa', organizacao: 'Organização',
+      pode_compartilhar: 'Pode compartilhar', quer_aprender: 'Quer aprender', toparia_convocar: 'Toparia convocar um grupo sobre',
+      no_mural: 'No mural', oferece: 'Oferece', pede: 'Pede',
+      conhecer: 'Pode ser bom conhecer', em_comum: 'em comum',
+      ver_linkedin: 'Ver no LinkedIn ↗',
+      conheco: 'Eu conheço essa pessoa', e_voce: 'É você?', atualizar_perfil: 'Atualizar meu perfil',
+      ficar: 'Quero ficar no mapa', sair: 'Quero sair',
+      // envio
+      res_local: 'Prévia local: no site publicado, isto seria enviado para moderação. Nada foi enviado.',
+      res_erro: 'Não foi possível enviar agora. Tente de novo em instantes.',
+      nao_preencha: 'Não preencha',
+      priv: 'Seu contato fica só com quem modera a rede e nunca aparece no site.',
+      preencha: r => `Preencha: ${r}.`,
+      r_quem: 'quem é você', r_titulo: 'título', r_nome: 'seu nome', r_contato: 'seu contato',
+      concordancia: 'Marque a concordância para publicar.',
+      // eu conheço
+      conheco_intro: n => `Conte de onde você conhece <b>${n}</b>. Quem modera confere e a ligação aparece no mapa na próxima atualização.`,
+      quem_e_voce: 'Quem é você?', quem_e_voce_dica: '(seu nome como aparece no mapa, se estiver)',
+      como_conhecem: 'Como vocês se conhecem?',
+      conheco_ok: 'Recebido, obrigado! A ligação vai para moderação.',
+      // perfil
+      perfil_intro: 'É assim que a rede descobre como você pode ajudar e ser ajudada (perguntas inspiradas em June Holley). Responda o que quiser.',
+      p_compartilha: 'O que você pode compartilhar com a rede?', p_compartilha_dica: '(saberes, habilidades, espaços, contatos)',
+      p_aprende: 'O que você quer aprender?',
+      p_convoca: 'Toparia convocar um grupo sobre…',
+      p_colabora: 'Com quem do mapa você já colabora?', p_colabora_dica: '(nomes separados por vírgula)',
+      p_gostaria: 'Com quem você gostaria de colaborar?', p_gostaria_dica: '(fica só com quem modera, para apresentar vocês)',
+      seu_contato: 'Seu contato', p_contato_dica: '(opcional, para confirmarmos que é você)',
+      p_priv: '"Compartilhar", "aprender" e "convocar" podem aparecer no seu card depois de revisados. "Já colaboro" vira ligação no mapa.',
+      perfil_ok: 'Recebido, obrigado! Seu perfil será atualizado depois da revisão.',
+      perfil_min: 'Responda pelo menos uma pergunta.',
+      // ficar / sair
+      ficar_ok: 'Obrigado por confirmar! Você continua no mapa.',
+      sair_q: 'Sair do mapa?', sair_q_txt: 'Seu nome e suas conexões serão removidos.',
+      saida_titulo: 'Pedido registrado',
+      saida_txt: 'Você já não aparece nesta tela e sai do mapa publicado na próxima atualização, sem perguntas.',
+      sair_intro: 'Escolha seu nome. Você sai na próxima atualização, sem perguntas.',
+      seu_nome: 'Seu nome',
+      // mural
+      mural_titulo: 'Mural de ofertas e pedidos',
+      mural_intro: 'Toda pessoa tem algo a oferecer e algo a pedir. Publique aqui e a rede ajuda a fazer a ponte.',
+      btn_publicar: 'Publicar oferta ou pedido',
+      f_todos: 'Todos', f_ofertas: 'Ofertas', f_pedidos: 'Pedidos', f_area: 'Filtrar por área', f_todas_areas: 'Todas as áreas',
+      mural_busca: 'Buscar no mural…', mostrar_atendidos: 'Mostrar atendidos',
+      mural_vazio_t: 'O mural está esperando a primeira oferta',
+      mural_vazio_p: 'Toda pessoa da rede tem algo a oferecer — um saber, uma hora de conversa, um espaço, um contato — e algo a pedir. Comece pelo seu.',
+      nada_filtros: 'Nada com esses filtros',
+      mural_nada_p: 'Tente outra área ou mostre também os itens atendidos.',
+      passo1_t: '1. Publique', passo1: 'Uma oferta ou um pedido, em poucas linhas.',
+      passo2_t: '2. A rede responde', passo2: 'Quem pode ajudar clica em “Posso ajudar”.',
+      passo3_t: '3. A ponte acontece', passo3: 'Quem modera apresenta vocês e acompanha.',
+      alguem: 'Alguém da rede', oferta: 'Oferta', pedido: 'Pedido', atendido: 'Atendido',
+      antigo_title: 'Publicado há mais de 2 meses', antigo: 'pode estar desatualizado',
+      quem_trabalha: 'Na rede, quem trabalha com isso:',
+      posso_ajudar: 'Posso ajudar', tenho_interesse: 'Tenho interesse',
+      copiar_link: 'Copiar link', link_copiado: 'Link copiado', copie_link: 'Copie o link:',
+      publicar_t: 'Publicar no mural',
+      publicar_intro: 'Quem modera revisa antes de publicar. Seja concreto: o que você oferece ou precisa, para quando, em que formato.',
+      voce_quer: 'Você quer…', oferecer: 'Oferecer', pedir: 'Pedir',
+      titulo_l: 'Título', titulo_ph: 'Ex.: Ofereço 2h de mentoria em captação de recursos',
+      descricao: 'Descrição', areas: 'Áreas', ate_3: '(até 3)',
+      nome_mural_dica: '(aparece no mural)',
+      no_mapa: 'Você está no mapa?', no_mapa_dica: '(opcional, para ligar o item ao seu card)',
+      contato_dica: '(e-mail ou WhatsApp)',
+      consent_mural: 'Concordo que título, descrição, áreas e meu nome apareçam no mural depois de revisados.',
+      enviar_revisao: 'Enviar para revisão',
+      publicar_ok: 'Recebido! Seu item aparece no mural depois da revisão.',
+      responder_intro: t => `Sobre: <b>${t}</b>. Quem modera recebe sua mensagem e apresenta vocês.`,
+      mensagem: 'Mensagem', mensagem_dica: '(como você pode ajudar ou o que te interessa)',
+      responder_ok: 'Recebido! Vamos apresentar vocês em breve.',
+      // iniciativas
+      ini_titulo: 'Iniciativas',
+      ini_intro: 'Projetos, encontros e grupos de prática que nascem da rede. Pequeno também conta: é assim que a rede aprende a fazer junto.',
+      btn_propor: 'Propor iniciativa',
+      f_todas: 'Todas', f_projetos: 'Projetos', f_encontros: 'Encontros', f_grupos: 'Grupos de prática',
+      mostrar_concluidas: 'Mostrar concluídas',
+      'tipo:Projeto': 'Projeto', 'tipo:Encontro': 'Encontro', 'tipo:Grupo de prática': 'Grupo de prática',
+      ini_vazio_t: 'Nenhuma iniciativa ainda — que tal a primeira?',
+      ini_vazio_p: 'Um projeto pequeno, um encontro, um grupo que se reúne para praticar algo junto. Redes fortes nascem de muitas iniciativas pequenas, não de um grande plano.',
+      ini_nada_p: 'Tente outro tipo ou outra área.',
+      concluida: 'Concluída', participantes: 'Participantes:', precisa_de: 'Precisa de:', proposta_por: 'Proposta por',
+      quero_participar: 'Quero participar',
+      propor_intro: 'Pode ser pequeno: um encontro, um grupo de prática, um projeto de poucas semanas.',
+      tipo: 'Tipo',
+      quem_participa: 'Quem já participa?', quem_participa_dica: '(nomes do mapa, separados por vírgula — confirme com essas pessoas antes)',
+      precisa_l: 'Do que a iniciativa precisa?',
+      nome_propos_dica: '(aparece como quem propôs)',
+      consent_ini: 'Concordo que a iniciativa e meu nome apareçam no site depois de revisados.',
+      propor_ok: 'Recebido! A iniciativa aparece depois da revisão.',
+      participar_intro: t => `Iniciativa: <b>${t}</b>. Encaminhamos sua mensagem para quem propôs.`,
+      contribuir: 'Como você quer contribuir?',
+      participar_ok: 'Recebido! Vamos encaminhar para quem propôs.',
+      // como participar
+      como_html: `<p>Nesta rede, todo mundo pode tecer: apresentar pessoas, oferecer o que sabe, pedir o que precisa. É assim que uma rede deixa de depender de uma pessoa só e passa a se cuidar sozinha.</p>
+    <div class="steps">
+      <div class="step"><b>1. Encontre-se no mapa</b>Busque seu nome, abra seu card e clique em “Atualizar meu perfil”: conte o que você pode compartilhar e o que quer aprender.</div>
+      <div class="step"><b>2. Ofereça e peça</b>Publique no Mural. Pedidos ajudam tanto quanto ofertas: mostram onde a rede pode agir.</div>
+      <div class="step"><b>3. Apresente pessoas</b>Conhece alguém do mapa? Clique em “Eu conheço essa pessoa”. Veja também “Pode ser bom conhecer” em cada card.</div>
+      <div class="step"><b>4. Faça junto</b>Proponha ou entre numa Iniciativa: um encontro, um grupo de prática, um projeto pequeno.</div>
+    </div>
+    <p class="privacy">Tudo passa por revisão antes de aparecer. Contatos nunca são publicados. Quer sair? Use “Quero sair do mapa”, no rodapé ou no seu card.</p>
+    <p style="font-size:12px">Inspirado no <i>Network Weaver Handbook</i>, de June Holley.</p>`
+    },
+    en: {
+      titulo: 'Novo Quilombo Network',
+      tagline: 'Who is in the network, where they meet, what they work on, what they offer and what they need',
+      meta_desc: 'Living map of the Novo Quilombo Network: who is in the network, where they meet, what they work on, what they offer and what they need.',
+      demo_banner: 'Demo mode: fictional sample items on the board and in initiatives.',
+      demo_sair: 'Exit demo',
+      idioma: 'Language',
+      visoes: 'Views',
+      tab_pessoas: 'People', tab_orgs: 'Organizations', tab_3d: '3D', tab_mural: 'Board', tab_ini: 'Initiatives',
+      busca_ph: 'Search for a person or organization…',
+      busca_nada: 'No one with that name on the map',
+      btn_participar: 'How to take part',
+      agrupar: 'Group by',
+      dim_comunidades: 'Communities', dim_temas: 'Themes', dim_atuacao: 'Sector',
+      dimdesc_comunidades: 'Groups where people actually meet: gatherings, circles, movements.',
+      dimdesc_temas: 'Subjects people work on. A person can have several.',
+      dimdesc_atuacao: 'Where people work from: companies, nonprofits, academia, the public sector…',
+      sem_comunidades: 'No community yet', sem_temas: 'No theme', sem_atuacao: 'No sector',
+      stats: s => `${s.p} ${pl(s.p, 'person', 'people')} · ${s.o} ${pl(s.o, 'organization', 'organizations')}<br>${s.c} communities · ${s.t} themes<br>${s.l} ${pl(s.l, 'connection', 'connections')} between people<br>${s.pct}% of people already connected to each other`,
+      n_pessoas: n => `${n} ${pl(n, 'person', 'people')}`,
+      n_na_rede: n => `${n} ${pl(n, 'person', 'people')} in the network`,
+      mapa_aria: 'Network map',
+      erro_3d: 'Could not load the 3D view.',
+      hint_pessoas: 'Click a person to see their profile · click a group to filter',
+      hint_orgs: 'Organizations represented by people in the network · click one to see who is there',
+      hint_3d: 'Drag to rotate · scroll to zoom · hover over a node',
+      detalhes: 'Details', fechar: 'Close', cancelar: 'Cancel', enviar: 'Send', continuar: 'Continue',
+      sim: 'Yes', nao: 'No', entendi: 'Got it', selecione: 'Select…', opcional: '(optional)',
+      rodape: 'Public professional information, gathered by Farley to show the Novo Quilombo Network. Inspired by June Holley’s work on network weaving.',
+      sair_link: 'Remove me from the map',
+      sobre_link: 'About the data',
+      sobre_html: s => `<p>This map shows who is in the Novo Quilombo Network, where people meet and what they work on, so they can get to know each other and collaborate.</p>
+    <h4>What is shown</h4><p>Name, job title, organization and LinkedIn link, that is, professional information that is already public. Communities, themes and sectors are a classification made by the network’s curators. Profiles, offers, requests and initiatives only appear after review, and only with what the person sent.</p>
+    <h4>What is never shown</h4><p>Email, phone number or any contact details. Whatever you write in the contact fields of the forms stays only with the network’s moderators.</p>
+    <h4>Legal basis and purpose</h4><p>Legitimate interest (Brazil’s LGPD, art. 7, IX), to connect people within a network they are part of, with the option to leave at any time.</p>
+    <h4>Your rights</h4><p>You can leave the map without giving a reason via “Remove me from the map” (in the footer or on your card), correct your information via “Update my profile”, or ask for any information about how your data is processed.</p>
+    <p class="privacy">Controller: ${s.responsavel}${s.contato ? ` · Contact: <a href="mailto:${s.contato}">${s.contato}</a>` : ''}</p>`,
+      pessoa: 'Person', organizacao: 'Organization',
+      pode_compartilhar: 'Can share', quer_aprender: 'Wants to learn', toparia_convocar: 'Would convene a group on',
+      no_mural: 'On the board', oferece: 'Offers', pede: 'Asks for',
+      conhecer: 'Might be good to meet', em_comum: 'in common',
+      ver_linkedin: 'View on LinkedIn ↗',
+      conheco: 'I know this person', e_voce: 'Is this you?', atualizar_perfil: 'Update my profile',
+      ficar: 'Keep me on the map', sair: 'Remove me',
+      res_local: 'Local preview: on the published site, this would be sent for moderation. Nothing was sent.',
+      res_erro: 'Could not send right now. Please try again shortly.',
+      nao_preencha: 'Do not fill in',
+      priv: 'Your contact stays only with the network’s moderators and never appears on the site.',
+      preencha: r => `Please fill in: ${r}.`,
+      r_quem: 'who you are', r_titulo: 'title', r_nome: 'your name', r_contato: 'your contact',
+      concordancia: 'Please tick the agreement box to publish.',
+      conheco_intro: n => `Tell us how you know <b>${n}</b>. A moderator checks it and the connection shows up on the map in the next update.`,
+      quem_e_voce: 'Who are you?', quem_e_voce_dica: '(your name as it appears on the map, if you are on it)',
+      como_conhecem: 'How do you know each other?',
+      conheco_ok: 'Received, thank you! The connection goes to moderation.',
+      perfil_intro: 'This is how the network learns how you can help and be helped (questions inspired by June Holley). Answer whatever you like.',
+      p_compartilha: 'What can you share with the network?', p_compartilha_dica: '(knowledge, skills, spaces, contacts)',
+      p_aprende: 'What do you want to learn?',
+      p_convoca: 'I would convene a group on…',
+      p_colabora: 'Who on the map do you already collaborate with?', p_colabora_dica: '(names separated by commas)',
+      p_gostaria: 'Who would you like to collaborate with?', p_gostaria_dica: '(only moderators see this, so they can introduce you)',
+      seu_contato: 'Your contact', p_contato_dica: '(optional, so we can confirm it is you)',
+      p_priv: '"Share", "learn" and "convene" may appear on your card after review. "Already collaborate" becomes a connection on the map.',
+      perfil_ok: 'Received, thank you! Your profile will be updated after review.',
+      perfil_min: 'Please answer at least one question.',
+      ficar_ok: 'Thanks for confirming! You stay on the map.',
+      sair_q: 'Leave the map?', sair_q_txt: 'Your name and your connections will be removed.',
+      saida_titulo: 'Request received',
+      saida_txt: 'You no longer appear on this screen, and you will be removed from the published map in the next update, no questions asked.',
+      sair_intro: 'Choose your name. You will be removed in the next update, no questions asked.',
+      seu_nome: 'Your name',
+      mural_titulo: 'Offers & requests board',
+      mural_intro: 'Everyone has something to offer and something to ask for. Post it here and the network helps build the bridge.',
+      btn_publicar: 'Post an offer or request',
+      f_todos: 'All', f_ofertas: 'Offers', f_pedidos: 'Requests', f_area: 'Filter by area', f_todas_areas: 'All areas',
+      mural_busca: 'Search the board…', mostrar_atendidos: 'Show fulfilled',
+      mural_vazio_t: 'The board is waiting for its first offer',
+      mural_vazio_p: 'Everyone in the network has something to offer (knowledge, an hour of conversation, a space, a contact) and something to ask for. Start with yours.',
+      nada_filtros: 'Nothing matches these filters',
+      mural_nada_p: 'Try another area or also show fulfilled items.',
+      passo1_t: '1. Post', passo1: 'An offer or a request, in a few lines.',
+      passo2_t: '2. The network responds', passo2: 'Whoever can help clicks “I can help”.',
+      passo3_t: '3. The bridge happens', passo3: 'A moderator introduces you and follows up.',
+      alguem: 'Someone in the network', oferta: 'Offer', pedido: 'Request', atendido: 'Fulfilled',
+      antigo_title: 'Posted more than 2 months ago', antigo: 'may be out of date',
+      quem_trabalha: 'In the network, people who work on this:',
+      posso_ajudar: 'I can help', tenho_interesse: 'I’m interested',
+      copiar_link: 'Copy link', link_copiado: 'Link copied', copie_link: 'Copy the link:',
+      publicar_t: 'Post on the board',
+      publicar_intro: 'A moderator reviews it before publishing. Be specific: what you offer or need, by when, in what format.',
+      voce_quer: 'You want to…', oferecer: 'Offer', pedir: 'Ask',
+      titulo_l: 'Title', titulo_ph: 'E.g.: I offer 2 hours of fundraising mentoring',
+      descricao: 'Description', areas: 'Areas', ate_3: '(up to 3)',
+      nome_mural_dica: '(shown on the board)',
+      no_mapa: 'Are you on the map?', no_mapa_dica: '(optional, to link the item to your card)',
+      contato_dica: '(email or WhatsApp)',
+      consent_mural: 'I agree that the title, description, areas and my name appear on the board after review.',
+      enviar_revisao: 'Send for review',
+      publicar_ok: 'Received! Your item will appear on the board after review.',
+      responder_intro: t => `About: <b>${t}</b>. A moderator receives your message and introduces you.`,
+      mensagem: 'Message', mensagem_dica: '(how you can help or what interests you)',
+      responder_ok: 'Received! We’ll introduce you soon.',
+      ini_titulo: 'Initiatives',
+      ini_intro: 'Projects, gatherings and practice groups born from the network. Small counts too: that is how a network learns to do things together.',
+      btn_propor: 'Propose an initiative',
+      f_todas: 'All', f_projetos: 'Projects', f_encontros: 'Gatherings', f_grupos: 'Practice groups',
+      mostrar_concluidas: 'Show completed',
+      'tipo:Projeto': 'Project', 'tipo:Encontro': 'Gathering', 'tipo:Grupo de prática': 'Practice group',
+      ini_vazio_t: 'No initiatives yet. How about the first one?',
+      ini_vazio_p: 'A small project, a gathering, a group that meets to practice something together. Strong networks grow from many small initiatives, not from one big plan.',
+      ini_nada_p: 'Try another type or area.',
+      concluida: 'Completed', participantes: 'Participants:', precisa_de: 'Needs:', proposta_por: 'Proposed by',
+      quero_participar: 'I want to join',
+      propor_intro: 'It can be small: a gathering, a practice group, a project of a few weeks.',
+      tipo: 'Type',
+      quem_participa: 'Who is already involved?', quem_participa_dica: '(names from the map, separated by commas; check with these people first)',
+      precisa_l: 'What does the initiative need?',
+      nome_propos_dica: '(shown as the proposer)',
+      consent_ini: 'I agree that the initiative and my name appear on the site after review.',
+      propor_ok: 'Received! The initiative will appear after review.',
+      participar_intro: t => `Initiative: <b>${t}</b>. We’ll forward your message to the proposer.`,
+      contribuir: 'How would you like to contribute?',
+      participar_ok: 'Received! We’ll forward it to the proposer.',
+      como_html: `<p>In this network, everyone can weave: introduce people, offer what they know, ask for what they need. That is how a network stops depending on a single person and starts taking care of itself.</p>
+    <div class="steps">
+      <div class="step"><b>1. Find yourself on the map</b>Search for your name, open your card and click “Update my profile”: tell us what you can share and what you want to learn.</div>
+      <div class="step"><b>2. Offer and ask</b>Post on the Board. Requests help as much as offers: they show where the network can act.</div>
+      <div class="step"><b>3. Introduce people</b>Know someone on the map? Click “I know this person”. Also check “Might be good to meet” on each card.</div>
+      <div class="step"><b>4. Do things together</b>Propose or join an Initiative: a gathering, a practice group, a small project.</div>
+    </div>
+    <p class="privacy">Everything is reviewed before it appears. Contacts are never published. Want to leave? Use “Remove me from the map”, in the footer or on your card.</p>
+    <p style="font-size:12px">Inspired by June Holley’s <i>Network Weaver Handbook</i>.</p>`
+    }
+  };
+
+  const LANGS = ['pt', 'en'], CHAVE = 'rnq-idioma';
+  function detectar() {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (LANGS.includes(q)) return q;
+    try { const s = localStorage.getItem(CHAVE); if (LANGS.includes(s)) return s; } catch (e) { /* sem armazenamento */ }
+    const nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'pt';
+    return /^pt/i.test(nav) ? 'pt' : 'en';
+  }
+  let lang = detectar();
+  const ouvintes = [];
+
+  function t(chave, arg) {
+    const v = T[lang][chave] ?? T.pt[chave];
+    if (v === undefined) return chave;
+    return typeof v === 'function' ? v(arg) : v;
+  }
+  // nome de grupo/papel vindo dos dados: usa nome_en em inglês quando existir
+  const nome = o => (lang === 'en' && o && o.nome_en) ? o.nome_en : (o ? o.nome : '');
+  const desc = o => (lang === 'en' && o && o.desc_en) ? o.desc_en : (o ? o.desc : '');
+  const locale = () => lang === 'en' ? 'en' : 'pt-BR';
+
+  function quando(data) {
+    if (!data) return '';
+    const d = new Date(data + 'T12:00:00'), dias = Math.round((Date.now() - d) / 864e5);
+    if (dias < 30) return new Intl.RelativeTimeFormat(locale(), { numeric: 'auto' }).format(-Math.max(dias, 0), 'day');
+    return d.toLocaleDateString(locale(), lang === 'en' ? { day: 'numeric', month: 'short', year: 'numeric' } : undefined);
+  }
+
+  function aplicar(raiz = document) {
+    raiz.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    raiz.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+    raiz.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+    if (raiz === document) {
+      document.documentElement.lang = lang === 'en' ? 'en' : 'pt-BR';
+      document.title = t('titulo');
+      const m = document.querySelector('meta[name="description"]'); if (m) m.content = t('meta_desc');
+      document.querySelectorAll('[data-lang]').forEach(b => {
+        b.classList.toggle('on', b.dataset.lang === lang); b.setAttribute('aria-pressed', b.dataset.lang === lang);
+      });
+    }
+  }
+
+  function definir(novo) {
+    if (!LANGS.includes(novo) || novo === lang) return;
+    lang = novo;
+    try { localStorage.setItem(CHAVE, lang); } catch (e) { /* sem armazenamento: vale só nesta visita */ }
+    const u = new URL(location.href);
+    if (u.searchParams.has('lang')) { u.searchParams.set('lang', lang); history.replaceState(null, '', u.toString()); }
+    aplicar();
+    ouvintes.forEach(fn => fn(lang));
+  }
+
+  window.I18N = {
+    get lang() { return lang; }, t, nome, desc, locale, quando, aplicar, definir,
+    aoMudar: fn => ouvintes.push(fn), textos: T
+  };
+})();

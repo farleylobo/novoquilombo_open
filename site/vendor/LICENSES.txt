@@ -1,0 +1,8 @@
+Bibliotecas incluídas nesta pasta (servidas pelo próprio site, sem CDN):
+
+d3 v7.9.0 — https://d3js.org — Licença ISC — Copyright 2010-2023 Mike Bostock
+3d-force-graph v1.73.4 — https://github.com/vasturiano/3d-force-graph — Licença MIT — Copyright (c) 2017 Vasco Asturiano
+  (inclui three.js — MIT — Copyright 2010-2024 three.js authors)
+
+Servir localmente evita que o navegador de quem visita o mapa chame servidores de terceiros (privacidade)
+e faz o site funcionar mesmo se um CDN sair do ar.

@@ -1,0 +1,15 @@
+{
+  "name": "rnq-visao-publica",
+  "private": true,
+  "description": "Rede Novo Quilombo — visão pública (site estático + pipeline em Python)",
+  "scripts": {
+    "test": "python3 -m unittest discover -s tests -q && node tests/e2e/site.test.mjs",
+    "test:py": "python3 -m unittest discover -s tests -q",
+    "test:e2e": "node tests/e2e/site.test.mjs"
+  },
+  "devDependencies": {
+    "3d-force-graph": "1.73.4",
+    "d3": "7.9.0",
+    "playwright": "^1.56.0"
+  }
+}

@@ -1,0 +1,18 @@
+# Dados e arquivos privados — nunca vão para o repositório
+*.xlsx
+~$*
+.env
+painel/
+_trabalho/
+site/data.js
+site/rnq-publico.json
+site/.exemplo
+site/_versoes-antigas/
+privado/
+.netlify/
+# Gerados / dependências
+node_modules
+tests/e2e/screenshots/
+__pycache__/
+*.pyc
+.DS_Store

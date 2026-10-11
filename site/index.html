@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Rede Novo Quilombo</title>
+<meta name="description" content="Mapa vivo da Rede Novo Quilombo: quem está na rede, onde se encontra, com o que trabalha, o que oferece e o que precisa.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="demo-banner" id="demoBanner" hidden><span data-i18n="demo_banner">Modo demonstração: itens de exemplo, fictícios, no mural e nas iniciativas.</span> <a href="./" id="demoSair" data-i18n="demo_sair">Sair da demonstração</a></div>
+<header>
+  <div class="brand"><h1 data-i18n="titulo">Rede Novo Quilombo</h1><p data-i18n="tagline">Quem está na rede, onde se encontra, com o que trabalha, o que oferece e o que precisa</p></div>
+  <nav class="tabs main-tabs" role="tablist" aria-label="Visões" data-i18n-aria="visoes">
+    <button class="on" data-v="pessoas" role="tab" data-i18n="tab_pessoas">Pessoas</button>
+    <button data-v="orgs" role="tab" data-i18n="tab_orgs">Organizações</button>
+    <button data-v="3d" role="tab">3D</button>
+    <button data-v="mural" role="tab"><span data-i18n="tab_mural">Mural</span> <span class="count" id="cntMural"></span></button>
+    <button data-v="iniciativas" role="tab"><span data-i18n="tab_ini">Iniciativas</span> <span class="count" id="cntIni"></span></button>
+  </nav>
+  <div class="search"><input id="q" list="nomes" placeholder="Buscar pessoa ou organização…" aria-label="Buscar pessoa ou organização" data-i18n-ph="busca_ph" data-i18n-aria="busca_ph"><datalist id="nomes"></datalist></div>
+  <div class="lang" role="group" aria-label="Idioma" data-i18n-aria="idioma"><button data-lang="pt" lang="pt-BR" title="Português">PT</button><button data-lang="en" lang="en" title="English">EN</button></div>
+  <button class="btn ghost-btn" id="btnParticipar" data-i18n="btn_participar">Como participar</button>
+</header>
+<main id="main">
+  <aside id="aside">
+    <h2 class="group-by" data-i18n="agrupar">Agrupar por</h2>
+    <div class="seg" id="seg"><button class="on" data-d="comunidades" data-i18n="dim_comunidades">Comunidades</button><button data-d="temas" data-i18n="dim_temas">Temas</button><button data-d="atuacao" data-i18n="dim_atuacao">Atuação</button></div>
+    <p class="dimdesc" id="dimdesc"></p>
+    <h2 id="dimtitle">Comunidades</h2><div id="coms"></div>
+    <div class="stats" id="stats"></div>
+  </aside>
+  <div id="stage">
+    <div id="vPessoas" class="v2d"></div>
+    <div id="vOrgs" class="v2d" hidden></div>
+    <div id="view3d" hidden></div>
+    <div class="tabs t3d" id="t3d" hidden><button class="on" data-m="pessoas" data-i18n="tab_pessoas">Pessoas</button><button data-m="orgs" data-i18n="tab_orgs">Organizações</button></div>
+
+    <section id="vMural" class="board" hidden aria-labelledby="muralTitle">
+      <div class="board-head">
+        <div><h2 id="muralTitle" data-i18n="mural_titulo">Mural de ofertas e pedidos</h2>
+          <p data-i18n="mural_intro">Toda pessoa tem algo a oferecer e algo a pedir. Publique aqui e a rede ajuda a fazer a ponte.</p></div>
+        <button class="btn" id="btnPublicar" data-i18n="btn_publicar">Publicar oferta ou pedido</button>
+      </div>
+      <div class="filters">
+        <div class="seg small" id="segMural"><button class="on" data-f="" data-i18n="f_todos">Todos</button><button data-f="oferta" data-i18n="f_ofertas">Ofertas</button><button data-f="pedido" data-i18n="f_pedidos">Pedidos</button></div>
+        <select id="fMuralArea" aria-label="Filtrar por área" data-i18n-aria="f_area"><option value="" data-i18n="f_todas_areas">Todas as áreas</option></select>
+        <input id="fMuralQ" type="search" placeholder="Buscar no mural…" aria-label="Buscar no mural" data-i18n-ph="mural_busca" data-i18n-aria="mural_busca">
+        <label class="chk"><input type="checkbox" id="fMuralAtendidos"> <span data-i18n="mostrar_atendidos">Mostrar atendidos</span></label>
+      </div>
+      <div class="grid" id="muralGrid"></div>
+    </section>
+
+    <section id="vIni" class="board" hidden aria-labelledby="iniTitle">
+      <div class="board-head">
+        <div><h2 id="iniTitle" data-i18n="ini_titulo">Iniciativas</h2>
+          <p data-i18n="ini_intro">Projetos, encontros e grupos de prática que nascem da rede. Pequeno também conta: é assim que a rede aprende a fazer junto.</p></div>
+        <button class="btn" id="btnPropor" data-i18n="btn_propor">Propor iniciativa</button>
+      </div>
+      <div class="filters">
+        <div class="seg small" id="segIni"><button class="on" data-f="" data-i18n="f_todas">Todas</button><button data-f="Projeto" data-i18n="f_projetos">Projetos</button><button data-f="Encontro" data-i18n="f_encontros">Encontros</button><button data-f="Grupo de prática" data-i18n="f_grupos">Grupos de prática</button></div>
+        <select id="fIniArea" aria-label="Filtrar por área" data-i18n-aria="f_area"><option value="" data-i18n="f_todas_areas">Todas as áreas</option></select>
+        <label class="chk"><input type="checkbox" id="fIniConcluidas"> <span data-i18n="mostrar_concluidas">Mostrar concluídas</span></label>
+      </div>
+      <div class="grid" id="iniGrid"></div>
+    </section>
+
+    <div class="hint" id="hint"></div>
+    <div class="card" id="card" role="dialog" aria-label="Detalhes" data-i18n-aria="detalhes"><button class="close" aria-label="Fechar" data-i18n-aria="fechar" onclick="closeCard()">×</button><div id="cBody"></div></div>
+  </div>
+</main>
+<footer>
+  <span data-i18n="rodape">Dados profissionais públicos, reunidos por Farley para mostrar a Rede Novo Quilombo. Inspirado no trabalho de June Holley sobre tecelagem de redes.</span>
+  <a href="#sobre" id="lnkSobre" data-i18n="sobre_link">Sobre os dados</a>
+  <a href="#" id="lnkSair" data-i18n="sair_link">Quero sair do mapa</a>
+</footer>
+
+<!-- Netlify Forms: declarações estáticas, detectadas no deploy. Os envios reais são feitos por JavaScript (app.js). -->
+<form name="sugestao-ligacao" data-netlify="true" netlify-honeypot="bot" hidden><input name="pessoa"><input name="quem_sugere"><textarea name="contexto"></textarea><input name="bot"></form>
+<form name="opt-out" data-netlify="true" netlify-honeypot="bot" hidden><input name="nome"><input name="origem"><input name="bot"></form>
+<form name="opt-in" data-netlify="true" netlify-honeypot="bot" hidden><input name="nome"><input name="bot"></form>
+<form name="perfil" data-netlify="true" netlify-honeypot="bot" hidden><input name="pessoa"><textarea name="compartilha"></textarea><textarea name="aprende"></textarea><input name="colabora_com"><input name="gostaria_colaborar"><input name="convocaria"><input name="contato"><input name="bot"></form>
+<form name="mural" data-netlify="true" netlify-honeypot="bot" hidden><input name="tipo"><input name="titulo"><textarea name="descricao"></textarea><input name="areas"><input name="nome"><input name="no_mapa"><input name="contato"><input name="bot"></form>
+<form name="mural-resposta" data-netlify="true" netlify-honeypot="bot" hidden><input name="item_id"><input name="item_titulo"><input name="nome"><input name="contato"><textarea name="mensagem"></textarea><input name="bot"></form>
+<form name="iniciativa" data-netlify="true" netlify-honeypot="bot" hidden><input name="tipo"><input name="titulo"><textarea name="descricao"></textarea><input name="areas"><input name="participantes"><input name="precisa"><input name="nome"><input name="contato"><input name="bot"></form>
+<form name="iniciativa-participar" data-netlify="true" netlify-honeypot="bot" hidden><input name="iniciativa_id"><input name="iniciativa_titulo"><input name="nome"><input name="contato"><textarea name="mensagem"></textarea><input name="bot"></form>
+
+<dialog id="dlg" aria-labelledby="dlgTitle"><div id="dlgBody"></div></dialog>
+
+<script src="i18n.js"></script>
+<script src="data.js"></script>
+<script src="demo.js"></script>
+<script src="vendor/d3.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
