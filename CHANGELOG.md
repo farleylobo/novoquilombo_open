@@ -1,5 +1,39 @@
 # Changelog
 
+## 2.6.0 — 15/10/2026 · Painel admin com login
+
+- Novo **painel admin com login**, em https://painel-novoquilombo.netlify.app (pasta `admin/`). Ele substitui o envio do HTML local e está em português e inglês.
+  - **Visão da rede:** o painel do tecelão para a rede toda e para cada comunidade.
+  - **Moderação:** aprovar, recusar com motivo e desfazer. Os contatos ficam escondidos até você pedir para ver.
+  - **Equipe:** convites, papéis (admin ou tecelã/tecelão) e comunidades.
+  - **Histórico:** registro de tudo o que foi feito, que não pode ser apagado.
+- **Login:** só por convite, com código de 6 dígitos por e-mail. Quem é admin também precisa de MFA (app autenticador), e o próprio banco exige isso.
+- **Banco no Supabase, região São Paulo** (`admin/supabase/schema.sql`):
+  - regras de acesso (RLS) em todas as tabelas;
+  - funções `rnq_*` para tudo o que muda dados;
+  - travas para que a rede nunca fique sem admin e para que o histórico não possa ser alterado.
+- **O painel passa a ser a fonte da moderação.** O `atualizar.py` traz as decisões do painel antes de gerar o site e, no fim, envia os itens novos e as visões.
+  - Sem conexão com o painel, nada é gerado.
+  - Em emergência, `--sem-painel-admin` volta a usar só a planilha.
+- **Cada comunidade tem a sua visão**, montada só com as pessoas e as linhas da planilha daquela comunidade. Um tecelão nunca recebe contatos de outra comunidade (RF21, testado).
+- **Quem pede para sair do mapa** também some do painel, inclusive os contatos (RF25).
+- **Segurança no navegador:**
+  - a visão roda num iframe isolado (sandbox);
+  - CSP rígida, com hash do único script inline;
+  - a chave secreta nunca entra no app (`publicar` e os testes recusam).
+- **Novos comandos em `painel_admin.py`:**
+  - `configurar` prepara o Supabase pela Management API: banco, login, e-mails PT/EN, função de convite e o primeiro admin;
+  - `publicar`, `status` e `demo`.
+- **Modo demonstração** com a rede fictícia, incluindo a opção "ver como" uma tecelã. A planilha de exemplo agora pode trazer envios fictícios (`gerar(..., com_tecelagem=True)`).
+- **Edge Function `convidar`:** confere se quem chama é admin com MFA, usando o login da própria pessoa, e só então convida.
+- **Fluxo opcional** `.github/workflows/painel-manter-ativo.yml`, para o plano gratuito do Supabase não pausar o projeto.
+- **Painel do tecelão:** ganhou o modo `painel`, usado pelo painel admin. O arquivo local continua igual.
+- **Testes:**
+  - 151 unitários;
+  - 32 do banco e da função de convite (PGlite: Postgres de verdade em memória), mais 1 opcional no Deno;
+  - 18 de ponta a ponta do painel (Chromium com a CSP do Netlify e um Supabase falso para login e MFA);
+  - os 30 de ponta a ponta do site continuam passando.
+
 ## 2.5.0 — 15/10/2026 · Painel em inglês
 
 - O painel do tecelão agora sai também em inglês: **`painel/painel-tecelagem-en.html`**, gerado junto com o painel em português a cada `exportar.py` / `atualizar.py`. Um link no topo leva de um para o outro.

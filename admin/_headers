@@ -1,0 +1,12 @@
+# Mesmo conteúdo dos [[headers]] do netlify.toml, garantido também em publicação por "arrastar e soltar".
+# O hash em script-src é o do script fixo do painel (rnq/painel.py, SCRIPT_PAINEL); um teste confere.
+/*
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-jFvpZV3i+1KcpWRhZgijH0GRXtVrVK6xUSvsWBx0Txw='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'
+  X-Frame-Options: DENY
+  X-Robots-Tag: noindex, nofollow
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), clipboard-write=(self)
+  Cross-Origin-Opener-Policy: same-origin
+  Strict-Transport-Security: max-age=31536000
+  Cache-Control: no-cache

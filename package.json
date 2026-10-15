@@ -1,13 +1,17 @@
 {
   "name": "rnq-visao-publica",
   "private": true,
-  "description": "Rede Novo Quilombo — visão pública (site estático + pipeline em Python)",
+  "description": "Rede Novo Quilombo — visão pública e painel admin (sites estáticos + pipeline em Python + Supabase)",
   "scripts": {
-    "test": "python3 -m unittest discover -s tests -q && node tests/e2e/site.test.mjs",
+    "test": "python3 -m unittest discover -s tests -q && node --test tests/sql/*.test.mjs && node tests/e2e/site.test.mjs && node --test --test-concurrency=1 tests/e2e/painel.test.mjs",
     "test:py": "python3 -m unittest discover -s tests -q",
-    "test:e2e": "node tests/e2e/site.test.mjs"
+    "test:sql": "node --test tests/sql/*.test.mjs",
+    "test:e2e": "node tests/e2e/site.test.mjs",
+    "test:painel": "node --test --test-concurrency=1 tests/e2e/painel.test.mjs"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@supabase/supabase-js": "2.117.2",
     "3d-force-graph": "1.73.4",
     "d3": "7.9.0",
     "playwright": "^1.56.0"

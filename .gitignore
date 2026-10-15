@@ -10,6 +10,8 @@ site/.exemplo
 site/_versoes-antigas/
 privado/
 .netlify/
+# Painel admin: config.js é de cada instalação (python3 painel_admin.py configurar)
+admin/config.js
 # Gerados / dependências
 node_modules
 tests/e2e/screenshots/

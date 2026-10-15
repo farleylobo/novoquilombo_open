@@ -1,0 +1,5 @@
+Bibliotecas e fontes incluídas no painel (servidas pelo próprio site, sem CDN):
+
+@supabase/supabase-js v2.117.2 — https://github.com/supabase/supabase-js — Licença MIT — Copyright (c) 2020 Supabase
+Marcellus (fonts/marcellus-400.woff2) — Brian J. Bonislawsky (Astigmatic) — SIL Open Font License 1.1
+Source Sans 3 (fonts/source-sans-3-*.woff2) — Adobe — SIL Open Font License 1.1

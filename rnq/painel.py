@@ -29,11 +29,14 @@ TEXTOS = {
         'gerado': 'gerado em',
         'formato_data': '%d/%m/%Y %H:%M',
         'privado': 'Documento interno: tem contatos privados. Não publique nem compartilhe este arquivo.',
+        'privado_painel': 'Área restrita: tem contatos privados. Não copie nem repasse para fora da equipe de tecelagem.',
+        'escopo_rede': 'Rede toda',
         'outro_idioma': '<a href="painel-tecelagem-en.html">English version</a>',
         'nota_planilha': '',
         'saude': 'Saúde da rede',
         'dep_hub': lambda pct, quem: f'{pct} das ligações passam por {quem}.',
         'hub_fora': 'O hub configurado não está no mapa.',
+        'hub_fora_escopo': 'O hub da rede não está nesta comunidade: aqui as ligações não dependem dele.',
         'sem_hub': lambda quem, g, i: f'Sem {quem}, a rede viraria {g} grupo(s) e {i} pessoa(s) ficariam isoladas.',
         'kpi_conectadas': 'Pessoas conectadas', 'kpi_conectadas_sub': lambda p: f'{p} da rede',
         'kpi_ligacoes': 'Ligações', 'kpi_ligacoes_sub': lambda n: f'{n} entre comunidades diferentes',
@@ -50,6 +53,8 @@ TEXTOS = {
                  'pedidos de saída (já aplicados)'],
         'aba': 'aba',
         'esperando_rodape': 'Tudo isso fica na planilha RNQ-tecelagem.xlsx.',
+        'esperando_rodape_painel': ('Aprove ou recuse na aba Moderação deste painel. Os números são da última '
+                                    'atualização feita no Mac (python3 atualizar.py).'),
         'sugeridas': 'Apresentações sugeridas',
         'sugeridas_sub': ('Critério (June Holley): tema em comum para gerar confiança, comunidade ou atuação diferente '
                           'para trazer novidade.\nPares que unem grupos separados ou trazem alguém isolado valem mais. '
@@ -86,6 +91,7 @@ TEXTOS = {
             f'Quilombo{": " + extra if extra else ""}. Combinem um papo e me contem como foi!'),
         'sobre': 'sobre', 'contatos': 'Contatos', 'sem_contato': 'sem contato',
         'marque_feita': 'Depois marque "Apresentação feita? = Sim" na aba Respostas do mural.',
+        'marque_feita_painel': 'Depois marque como feita na aba Moderação deste painel.',
         'nenhuma_resposta': 'Nenhuma resposta esperando.',
         'pedidos': 'Pedidos do mural em aberto',
         'de': 'de', 'contato': 'contato',
@@ -122,12 +128,15 @@ TEXTOS = {
         'gerado': 'generated',
         'formato_data': '%Y-%m-%d %H:%M',
         'privado': 'Internal document: it holds private contacts. Do not publish or share this file.',
+        'privado_painel': 'Restricted area: it holds private contacts. Do not copy or pass them on outside the weaving team.',
+        'escopo_rede': 'Whole network',
         'outro_idioma': '<a href="painel-tecelagem.html">Versão em português</a>',
         'nota_planilha': ('<p class="muted">Tab and column names from the RNQ-tecelagem.xlsx spreadsheet, and what '
                           'people wrote, are shown as they are, in Portuguese.</p>'),
         'saude': 'Network health',
         'dep_hub': lambda pct, quem: f'{pct} of links go through {quem}.',
         'hub_fora': 'The configured hub is not on the map.',
+        'hub_fora_escopo': 'The network hub is not in this community: links here do not depend on them.',
         'sem_hub': lambda quem, g, i: (f'Without {quem}, the network would split into {g} group(s) and '
                                        f'{i} person(s) would be isolated.'),
         'kpi_conectadas': 'People connected', 'kpi_conectadas_sub': lambda p: f'{p} of the network',
@@ -145,6 +154,8 @@ TEXTOS = {
                  '"Join" sign-ups waiting for "Incluir no mapa?"', 'removal requests (already applied)'],
         'aba': 'tab',
         'esperando_rodape': 'All of this lives in the RNQ-tecelagem.xlsx spreadsheet.',
+        'esperando_rodape_painel': ('Approve or decline in the Moderation tab of this panel. Numbers come from the '
+                                    'last update run on the Mac (python3 atualizar.py).'),
         'sugeridas': 'Suggested introductions',
         'sugeridas_sub': ('Criterion (June Holley): a shared theme builds trust; a different community or role brings '
                           'novelty.\nPairs that join separate groups or bring in someone isolated score higher. '
@@ -183,6 +194,7 @@ TEXTOS = {
             f'Network board{": " + extra if extra else ""}. Set up a chat and let me know how it went!'),
         'sobre': 'about', 'contatos': 'Contacts', 'sem_contato': 'no contact',
         'marque_feita': 'Then set "Apresentação feita? = Sim" in the Respostas do mural tab.',
+        'marque_feita_painel': 'Then mark it as done in the Moderation tab of this panel.',
         'nenhuma_resposta': 'No replies waiting.',
         'pedidos': 'Open requests on the board',
         'de': 'by', 'contato': 'contact',
@@ -230,6 +242,17 @@ def _pct(x):
 
 def _primeiro(nome):
     return txt(nome).split(' ')[0] if nome else ''
+
+
+def _botao(T, painel):
+    if painel:
+        return f'<button type="button" data-copiar data-copiado="{_e(T["copiado"])}">{_e(T["copiar"])}</button>'
+    return f'<button onclick="copiar(this)">{T["copiar"]}</button>'
+
+
+def _script_arquivo(T):
+    return (f"function copiar(b){{const t=b.previousElementSibling;t.select();navigator.clipboard?.writeText(t.value);"
+            f"b.textContent='{T['copiado']}';setTimeout(()=>b.textContent='{T['copiar']}',1500)}}")
 
 
 def mensagem_apresentacao(pa, pb, motivo, idioma='pt'):
@@ -312,7 +335,30 @@ def _motivos(s, idioma, n):
     return [rz[r['tipo']](r, n) for r in s['razoes'] if r.get('tipo') in rz]
 
 
-def gerar(publico, interno, tec, sugestoes, avisos, historico=None, agora=None, site_url='', idioma='pt'):
+# Script do painel admin (modo='painel'): fixo, para caber numa Content-Security-Policy com hash (sem 'unsafe-inline').
+# Copiar e ajustar a altura passam pela página de fora (postMessage): o iframe fica isolado, sem acesso à sessão.
+SCRIPT_PAINEL = ("document.addEventListener('click',function(e){var b=e.target.closest('[data-copiar]');if(!b)return;"
+                 "var t=b.previousElementSibling;parent.postMessage({rnqCopiar:t.value},'*');var o=b.textContent;"
+                 "b.textContent=b.getAttribute('data-copiado');setTimeout(function(){b.textContent=o},1500)});"
+                 "function rnqAltura(){parent.postMessage({rnqAltura:document.documentElement.scrollHeight},'*')}"
+                 "new ResizeObserver(rnqAltura).observe(document.body);addEventListener('load',rnqAltura);")
+MODOS = ('arquivo', 'painel')
+# No painel admin, o conteúdo usa a mesma paleta do app (lápis-lazúli, ouro, papiro) e não repete o título.
+ESTILO_PAINEL = ('<style>:root{--bg:#F1E8D4;--panel:#FBF8F1;--ink:#1F1A2B;--muted:#625A6C;--line:#DCCFB3;'
+                 '--accent:#233E8B;--ok:#2F6B55}body{background:#FBF8F1}main{max-width:none;padding:16px 16px 32px}'
+                 '.top h1{display:none}.priv{background:#F4E6C4;color:#5C4313}.fases li.on{background:#233E8B;'
+                 'border-color:#233E8B}h2{color:#172A63}</style>')
+
+
+def gerar(publico, interno, tec, sugestoes, avisos, historico=None, agora=None, site_url='', idioma='pt',
+          modo='arquivo', escopo_nome=None):
+    """modo='arquivo': o HTML local de sempre (painel/painel-tecelagem*.html).
+    modo='painel': o mesmo conteúdo para o painel admin com login (dentro de um iframe isolado): sem links para
+    arquivos locais, textos que apontam para a aba Moderação e script fixo. avisos=None esconde a seção de avisos
+    (recorte de comunidade: os avisos do pipeline citam pessoas de outras comunidades)."""
+    if modo not in MODOS:
+        raise ValueError(f'modo desconhecido: {modo!r}')
+    painel = modo == 'painel'
     T = _t(idioma)
     fases = FASES_EN if idioma == 'en' else FASES
     agora = agora or datetime.now()
@@ -330,7 +376,7 @@ def gerar(publico, interno, tec, sugestoes, avisos, historico=None, agora=None, 
     trilha = ''.join(f'<li class="{"on" if f == met["fase"] else ""}">{_e(fases[f][0])}</li>'
                      for f in ('fragmentos', 'hub', 'multi-hub', 'nucleo'))
     fase_nome, fase_texto = fases.get(met['fase'], (met['fase_nome'], met['fase_texto']))
-    dep_txt = T['dep_hub'](_pct(met['dependencia_hub']), _e(nome(hub))) if hub else T['hub_fora']
+    dep_txt = T['dep_hub'](_pct(met['dependencia_hub']), _e(nome(hub))) if hub else T['hub_fora_escopo' if interno.get('recorte') else 'hub_fora']
     sem_hub = T['sem_hub'](_e(_primeiro(nome(hub))), len(met['grupos_sem_hub']), met['isolados_sem_hub']) if hub else ''
     cards = [
         (T['kpi_conectadas'], f'{met["conectadas"]}/{met["pessoas"]}', T['kpi_conectadas_sub'](_pct(met['pct_conectadas']))),
@@ -371,7 +417,7 @@ def gerar(publico, interno, tec, sugestoes, avisos, historico=None, agora=None, 
             f'<span class="pts">{s["pontos"]} pts</span></header>'
             f'<ul>{"".join(f"<li>{_e(m)}</li>" for m in motivos)}</ul>'
             f'<textarea readonly rows="3">{_e(msg)}</textarea>'
-            f'<button onclick="copiar(this)">{T["copiar"]}</button>'
+            f'{_botao(T, painel)}'
             f'<small class="muted">{T["registre"](_e(pa["nome"]), _e(pb["nome"]))}</small></article>')
     if not sug_html:
         sug_html = f'<p class="muted">{T["sem_sugestoes"]}</p>'
@@ -412,7 +458,7 @@ def gerar(publico, interno, tec, sugestoes, avisos, historico=None, agora=None, 
     if not ped_html:
         ped_html = f'<p class="muted">{T["nenhum_pedido"]}</p>'
 
-    av_html = ''.join(f'<li>{_e(a)}</li>' for a in avisos) or f'<li>{T["nenhum_aviso"]}</li>'
+    av_html = ''.join(f'<li>{_e(a)}</li>' for a in avisos or []) or f'<li>{T["nenhum_aviso"]}</li>'
 
     # ---- "posso ajudar" esperando apresentação (o que mais gera conexão real)
     itens = {txt(r.get('ID')): r for r in tec.get('Mural', [])}
@@ -427,8 +473,8 @@ def gerar(publico, interno, tec, sugestoes, avisos, historico=None, agora=None, 
         resp_html += (f'<article class="ped"><b>{_e(quem)} → {_e(autor)}</b> <small>{T["sobre"]} "{_e(titulo)}"</small>'
                       f'<p class="muted">{T["contatos"]}: {_e(quem)} — {_e(r.get("Contato (privado)")) or T["sem_contato"]} · '
                       f'{_e(autor)} — {_e(item.get("Contato (privado)")) or T["sem_contato"]}</p>'
-                      f'<textarea readonly rows="3">{_e(msg)}</textarea><button onclick="copiar(this)">{T["copiar"]}</button>'
-                      f'<small class="muted">{T["marque_feita"]}</small></article>')
+                      f'<textarea readonly rows="3">{_e(msg)}</textarea>{_botao(T, painel)}'
+                      f'<small class="muted">{T["marque_feita_painel" if painel else "marque_feita"]}</small></article>')
     resp_html = resp_html or f'<p class="muted">{T["nenhuma_resposta"]}</p>'
 
     # ---- itens antigos (pedem confirmação)
@@ -467,9 +513,9 @@ ul.pend{{list-style:none;padding:0;margin:0}}ul.pend li{{padding:6px 0;border-bo
 .etapa b{{display:block;font-size:22px}}.etapa span{{font-size:12px;color:var(--muted)}}
 table{{width:100%;border-collapse:collapse;font-size:14px}}td,th{{text-align:left;padding:6px;border-bottom:1px solid var(--line)}}
 .spark{{color:var(--accent);vertical-align:middle;margin-left:8px}}
-</style></head><body><main>
-<div class="top"><h1>{T["titulo"]}</h1><span class="muted">{T["rede"]} · {T["gerado"]} {_e(agora.strftime(T["formato_data"]))} · {T["outro_idioma"]}</span></div>
-<div class="priv">{T["privado"]}</div>
+</style>{ESTILO_PAINEL if painel else ''}</head><body><main>
+<div class="top"><h1>{_e(escopo_nome) if painel and escopo_nome else T["titulo"]}</h1><span class="muted">{T["rede"]} · {T["gerado"]} {_e(agora.strftime(T["formato_data"]))}{"" if painel else " · " + T["outro_idioma"]}</span></div>
+<div class="priv">{T["privado_painel" if painel else "privado"]}</div>
 {T["nota_planilha"]}
 <section><h2>{T["saude"]}</h2>
 <ol class="fases">{trilha}</ol>
@@ -478,7 +524,7 @@ table{{width:100%;border-collapse:collapse;font-size:14px}}td,th{{text-align:lef
 <div class="kpis">{cards_html}</div></section>
 {hist_html}
 <section><h2>{T["esperando"]}</h2><ul class="pend">{pend}</ul>
-<p class="muted">{T["esperando_rodape"]}</p></section>
+<p class="muted">{T["esperando_rodape_painel" if painel else "esperando_rodape"]}</p></section>
 
 <section><h2>{T["sugeridas"]}</h2>
 <p class="muted">{T["sugeridas_sub"]}</p>
@@ -495,14 +541,14 @@ table{{width:100%;border-collapse:collapse;font-size:14px}}td,th{{text-align:lef
 
 <section><h2>{T["semana"]}</h2>
 <p class="muted">{T["semana_sub"]}</p>
-<textarea readonly rows="10">{_e(semana)}</textarea><button onclick="copiar(this)">{T["copiar"]}</button></section>
+<textarea readonly rows="10">{_e(semana)}</textarea>{_botao(T, painel)}</section>
 
 <div class="cols">
 <section><h2>{T["pontes"]}</h2><p class="muted">{T["pontes_sub"]}</p><ol>{ponte}</ol></section>
 <section><h2>{T["mais_conectadas"]}</h2><ol>{graus}</ol></section>
 </div>
 <section><h2>{T["isolados"](len(met["isolados"]))}</h2><p>{isol or T["ninguem"]}</p></section>
-<section><h2>{T["avisos"]}</h2><ul>{av_html}</ul></section>
+{"" if avisos is None else f'<section><h2>{T["avisos"]}</h2><ul>{av_html}</ul></section>'}
 </main>
-<script>function copiar(b){{const t=b.previousElementSibling;t.select();navigator.clipboard?.writeText(t.value);b.textContent='{T["copiado"]}';setTimeout(()=>b.textContent='{T["copiar"]}',1500)}}</script>
+<script>{SCRIPT_PAINEL if painel else _script_arquivo(T)}</script>
 </body></html>'''
