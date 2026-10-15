@@ -111,6 +111,23 @@ FASES = {
 }
 
 
+# Mesmas fases em inglês, para o painel em EN (rnq/painel.py, idioma='en').
+FASES_EN = {
+    'fragmentos': ('Phase 1 · Scattered fragments',
+                   'Most people are not yet linked to anyone on the map. Priority: introduce isolated people '
+                   'to someone with a theme in common.'),
+    'hub': ('Phase 2 · Hub-and-spoke',
+            'The network depends on one central point. It is a necessary but temporary phase: introduce people '
+            'to each other without going through you, and invite others to weave.'),
+    'multi-hub': ('Phase 3 · Multi-hub',
+                  'Several connectors link groups to each other. Priority: strengthen bridges between communities '
+                  'and grow new weavers.'),
+    'nucleo': ('Phase 4 · Core and periphery',
+               'There is a dense core of trust and an open periphery. Priority: bring new people in through the '
+               'periphery and link the network to other networks.'),
+}
+
+
 def fase(pct_conectadas, dependencia_hub, caminho):
     if pct_conectadas < 0.4:
         return 'fragmentos'
@@ -170,7 +187,9 @@ def _comp_de(adj):
 def sugerir_apresentacoes(pessoas, ligacoes, ja_feitas=(), desejos=(), hub_id=None, n=15, max_por_pessoa=2,
                           nomes_temas=None, nomes_coms=None, nomes_atu=None):
     """Pares para apresentar. ja_feitas/desejos: iteráveis de pares (a, b) de ids.
-    Devolve [{'a', 'b', 'pontos', 'motivos': [...], 'temas': [...]}] ordenado por pontos."""
+    Devolve [{'a', 'b', 'pontos', 'motivos': [...], 'razoes': [...], 'temas': [...]}] ordenado por pontos.
+    'motivos' é o texto em português; 'razoes' traz os mesmos motivos como dados (tipo + ids), para o
+    painel montar o texto em qualquer idioma."""
     nomes_temas = nomes_temas or {}
     nomes_coms = nomes_coms or {}
     nomes_atu = nomes_atu or {}
@@ -191,30 +210,37 @@ def sugerir_apresentacoes(pessoas, ligacoes, ja_feitas=(), desejos=(), hub_id=No
         pediu = frozenset((a, b)) in quer
         if not (temas or coms or pediu):
             continue
-        pontos, motivos = 0, []
+        pontos, motivos, razoes = 0, [], []
         if pediu:
             pontos += 10
             motivos.append('uma das pessoas pediu para conhecer a outra')
+            razoes.append({'tipo': 'pediu'})
         if temas:
             pontos += 3 * len(temas)
             motivos.append('trabalham com ' + ', '.join(sorted(nomes_temas.get(t, t) for t in temas)))
+            razoes.append({'tipo': 'temas', 'ids': sorted(temas)})
         if coms:
             pontos += 1
             motivos.append('estão em ' + ', '.join(sorted(nomes_coms.get(c, c) for c in coms)))
+            razoes.append({'tipo': 'comunidades', 'ids': sorted(coms)})
         if ca and cb and ca != cb and not (ca <= cb or cb <= ca):
             pontos += 2
             motivos.append('vêm de comunidades diferentes')
+            razoes.append({'tipo': 'comunidades_diferentes'})
         if aa and ab and not (aa & ab):
             pontos += 2
             motivos.append('atuam de lugares diferentes (' + ' × '.join(
                 [', '.join(sorted(nomes_atu.get(x, x) for x in aa)), ', '.join(sorted(nomes_atu.get(x, x) for x in ab))]) + ')')
+            razoes.append({'tipo': 'atuacoes_diferentes', 'a': sorted(aa), 'b': sorted(ab)})
         if comp[a] != comp[b] and adj[a] and adj[b]:
             pontos += 3
             motivos.append('ligaria dois grupos que hoje não se tocam')
+            razoes.append({'tipo': 'ponte'})
         if not adj[a] or not adj[b]:
             pontos += 2
             motivos.append('traz para a rede alguém que ainda não tem nenhuma ligação')
-        cands.append({'a': a, 'b': b, 'pontos': pontos, 'motivos': motivos, 'temas': sorted(temas)})
+            razoes.append({'tipo': 'isolado'})
+        cands.append({'a': a, 'b': b, 'pontos': pontos, 'motivos': motivos, 'razoes': razoes, 'temas': sorted(temas)})
     cands.sort(key=lambda c: (-c['pontos'], c['a'], c['b']))
     uso, out = {}, []
     for c in cands:

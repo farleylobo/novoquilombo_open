@@ -3,7 +3,7 @@
     python3 atualizar.py
 
 1. Se houver NETLIFY_TOKEN/NETLIFY_SITE_ID (.env), traz os envios novos dos formulários.
-2. Gera site/rnq-publico.json, site/data.js e painel/painel-tecelagem.html.
+2. Gera site/rnq-publico.json, site/data.js e o painel (painel/painel-tecelagem.html, em inglês: painel-tecelagem-en.html).
 3. Roda os testes automáticos; se algum falhar, avisa (o site gerado continua no lugar para você conferir).
 """
 import os
@@ -41,7 +41,7 @@ def main():
     if r.returncode != 0:
         print(r.stderr)
         sys.exit(1)
-    print('Painel do tecelão: painel/painel-tecelagem.html')
+    print('Painel do tecelão: painel/painel-tecelagem.html (English: painel/painel-tecelagem-en.html)')
 
 
 if __name__ == '__main__':

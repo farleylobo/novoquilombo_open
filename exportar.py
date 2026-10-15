@@ -3,6 +3,7 @@
 Lê as três planilhas e gera:
 - site/rnq-publico.json e site/data.js  (público — só campos da lista fechada, RF3/CA1)
 - painel/painel-tecelagem.html          (privado — saúde da rede, apresentações sugeridas, fila de moderação)
+- painel/painel-tecelagem-en.html       (privado — o mesmo painel em inglês)
 - _trabalho/historico-rede.json         (privado — evolução das métricas a cada atualização)
 
 Uso: python3 exportar.py            (ou python3 atualizar.py para sincronizar formulários antes)
@@ -39,6 +40,7 @@ def caminhos(pasta):
         'tecelagem': os.path.join(pasta, 'RNQ-tecelagem.xlsx'),
         'site': os.path.join(pasta, 'site'),
         'painel': os.path.join(pasta, 'painel', 'painel-tecelagem.html'),
+        'painel_en': os.path.join(pasta, 'painel', 'painel-tecelagem-en.html'),
         'historico': os.path.join(pasta, '_trabalho', 'historico-rede.json'),
     }
 
@@ -93,6 +95,7 @@ def executar(pasta=AQUI, agora=None, sem_painel=False, silencioso=False, site=No
         os.makedirs(os.path.dirname(c['painel']), exist_ok=True)
         site_url = netlify.ler_env(pasta).get('RNQ_SITE_URL', '')
         escrever(c['painel'], painel.gerar(pub, interno, tec, sug, avisos, hist, agora, site_url))
+        escrever(c['painel_en'], painel.gerar(pub, interno, tec, sug, avisos, hist, agora, site_url, idioma='en'))
 
     e, m = pub['estatisticas'], interno['metricas']
     if not silencioso:

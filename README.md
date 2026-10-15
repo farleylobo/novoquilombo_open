@@ -24,7 +24,7 @@ o que oferece e o que precisa — e um conjunto de ferramentas para **tecer** a 
 | Quem quer entrar | **Faça parte**: cadastro em 5 passos (PT/EN) com prévia do card; cai na aba Cadastros para moderação | `site/participar.html` |
 | Quem abre o link | No card: perfil ("posso compartilhar / quero aprender"), papéis na rede, "Pode ser bom conhecer", "Eu conheço essa pessoa", ficar/sair do mapa | `site/` |
 | Farley e quem tece junto | **Planilha de tecelagem**: moderação de tudo que chega pelo site, diário de apresentações, papéis, correções | `RNQ-tecelagem.xlsx` |
-| Farley e quem tece junto | **Painel do tecelão**: fase da rede, dependência do hub, apresentações sugeridas com mensagem pronta, fila de moderação, pedidos sem resposta | `painel/painel-tecelagem.html` |
+| Farley e quem tece junto | **Painel do tecelão**: fase da rede, dependência do hub, apresentações sugeridas com mensagem pronta, fila de moderação, pedidos sem resposta. Em português e inglês | `painel/painel-tecelagem.html` e `painel/painel-tecelagem-en.html` |
 
 ## Como atualizar (o dia a dia)
 
@@ -39,7 +39,7 @@ python3 atualizar.py      # formulários -> planilha -> site + painel -> testes
 
 `atualizar.py` faz, em ordem:
 1. traz os envios novos dos formulários do site (se houver `.env` com o token do Netlify — ver `docs/DEPLOY.md`);
-2. gera `site/rnq-publico.json`, `site/data.js`, `painel/painel-tecelagem.html` e o histórico de saúde da rede;
+2. gera `site/rnq-publico.json`, `site/data.js`, o painel (`painel/painel-tecelagem.html` e a versão em inglês `painel-tecelagem-en.html`) e o histórico de saúde da rede;
 3. roda os testes. Se algo falhar, nada é escondido: você vê o erro.
 
 Depois, abra `painel/painel-tecelagem.html` para ver o que fazer, e `site/index.html` para conferir o site.
@@ -50,6 +50,7 @@ Para ver o mural e as iniciativas com exemplos fictícios: `site/index.html?demo
 O site tem um botão **PT | EN** no cabeçalho. Em inglês, o nome da rede é **Novo Quilombo Network**.
 
 - **Textos da interface:** `site/i18n.js`. Para mudar uma frase, edite os dois blocos, `pt` e `en`. Um teste confere se os dois têm as mesmas chaves.
+- **Textos do painel do tecelão:** `TEXTOS` em `rnq/painel.py`, também com os blocos `pt` e `en` e o mesmo teste. As fases da rede em inglês ficam em `FASES_EN` (`rnq/rede.py`).
 - **Nomes de comunidades, temas e atuação:** `NOMES_EN` em `rnq/config.py`. Os nomes dos papéis ficam em `PAPEIS`, no mesmo arquivo. Se você criar um nome novo sem tradução, o site mostra o nome em português e o `atualizar.py` avisa.
 - **Não são traduzidos:** o que as pessoas escrevem (mural, iniciativas, perfil, cargos) e os nomes de pessoas e organizações.
 - **Idioma de abertura:** o link com `?lang=en` (ou `?lang=pt`) vem primeiro. Depois vale a última escolha feita no botão. Sem nenhuma das duas, o site segue o idioma do navegador: português para quem usa português e inglês para os demais.

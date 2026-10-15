@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.5.0 — 15/10/2026 · Painel em inglês
+
+- O painel do tecelão agora sai também em inglês: **`painel/painel-tecelagem-en.html`**, gerado junto com o painel em português a cada `exportar.py` / `atualizar.py`. Um link no topo leva de um para o outro.
+- Textos do painel em `TEXTOS` (`rnq/painel.py`), com blocos `pt` e `en`; as fases da rede em inglês em `FASES_EN` (`rnq/rede.py`).
+- Em inglês, temas, comunidades e atuação usam o `nome_en`. Os motivos de cada apresentação sugerida e a mensagem pronta saem traduzidos.
+- Ficam em português, como estão na planilha: nomes de abas e colunas, valores como "Apresentadas", o que as pessoas escreveram (mural, cargos) e os avisos da atualização. O painel em inglês avisa isso no topo.
+- O painel em português não muda, exceto "1 ligação" no singular.
+- Testes: 97 unitários (7 novos para os dois idiomas).
+
 ## 2.4.0 — 11/10/2026 · "Faça parte"
 
 - Nova página **`participar.html`**: cadastro em 5 passos com prévia do card, em PT e EN. Portada do protótipo de 11/10 e ligada pelo botão "Faça parte" no mapa e em "Como participar".
