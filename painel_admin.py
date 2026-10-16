@@ -146,7 +146,7 @@ def ler_funcao():
 
 # ------------------------------------------------------------------------------------------------- comandos
 def configurar(c=None, gestao=None, banco=None):
-    c = c or cfg()
+    c = cfg() if c is None else c
     faltam = [k for k in ('SUPABASE_ACCESS_TOKEN', 'SUPABASE_PROJECT_REF', 'RNQ_ADMIN_EMAIL') if not c.get(k)]
     if faltam:
         print('Faltam no .env:', ', '.join(faltam))
@@ -200,7 +200,7 @@ def configurar(c=None, gestao=None, banco=None):
 
 
 def status(c=None, banco=None):
-    c = c or cfg()
+    c = cfg() if c is None else c
     if not admin.configurado(c):
         print('Painel admin não configurado neste Mac (faltam SUPABASE_URL e SUPABASE_SECRET_KEY no .env).')
         print('Rode: python3 painel_admin.py configurar')
@@ -261,7 +261,7 @@ def _criar_site(token, nome):
 
 
 def publicar(so_pasta=False, demo=False, c=None):
-    c = c or cfg()
+    c = cfg() if c is None else c
     segredos = [c.get('SUPABASE_SECRET_KEY'), c.get('SUPABASE_SERVICE_ROLE_KEY'), c.get('SUPABASE_ACCESS_TOKEN'),
                 c.get('NETLIFY_TOKEN')]
     pasta = montar_pasta(demo=demo, segredos=[s for s in segredos if s])
