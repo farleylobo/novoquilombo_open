@@ -10,7 +10,7 @@ Regras de desenho:
 import glob
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import openpyxl
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -356,8 +356,19 @@ def mural_do_cadastro(eid, c):
     return out
 
 
+BRASILIA = timezone(timedelta(hours=-3))      # sem horário de verão desde 2019
+
+
 def _quando(v):
+    """Data do envio no horário de Brasília ('AAAA-MM-DD HH:MM'). O Netlify manda em UTC ('...Z');
+    datas sem fuso (CSV, planilha) ficam como estão."""
     if not v:
-        return datetime.now().strftime('%Y-%m-%d %H:%M')
-    s = txt(v).replace('T', ' ')
-    return s[:16]
+        return datetime.now(BRASILIA).strftime('%Y-%m-%d %H:%M')
+    s = txt(v)
+    try:
+        d = datetime.fromisoformat(s.replace('Z', '+00:00'))
+        if d.tzinfo:
+            return d.astimezone(BRASILIA).strftime('%Y-%m-%d %H:%M')
+    except ValueError:
+        pass
+    return s.replace('T', ' ')[:16]

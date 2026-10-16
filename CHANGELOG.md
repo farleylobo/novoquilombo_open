@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.7.0 — 16/10/2026 · Envios na hora e mapa atualizado todo dia
+
+- **Envios chegam ao painel sozinhos.** Inscrição, oferta, pedido, resposta e participação enviados no mapa entram na Moderação na hora, com a marca "chegou pelo site". Sem terminal.
+  - Nova Edge Function `receber`: o Netlify a chama a cada envio (aviso `submission_created` por formulário).
+  - Protegida por chave longa na URL (`RNQ_RECEBER_SEGREDO`, comparação em tempo constante), confere o nome do site, recusa corpo acima de 64 KB e ignora o honeypot.
+  - Monta o item exatamente como o pipeline (`contrato.json` gerado de `rnq/admin.py`; paridade testada).
+  - O pipeline não apaga nem sobrescreve itens que chegaram pelo site (`moderacao.fonte`).
+- **Mapa público atualizado uma vez por dia**, por rotina no Mac (`python3 painel_admin.py automatizar [--hora N] [--desligar]`, launchd). Se o Mac estiver dormindo, roda quando ele acordar. Log em `~/Library/Logs/rnq-rotina.log`.
+- **Faixa do mapa no painel:** horário da rotina, última publicação e, se falhou, em que etapa. `publicar.py` manual também registra.
+- **Moderação:** botão "Atualizar lista" e recarga automática ao voltar para a aba.
+- `configurar` agora publica a função `receber`, cria a chave e liga os formulários do Netlify. Novo comando `ligar-formularios`.
+- Datas dos envios do Netlify (UTC) passam a ser gravadas no horário de Brasília.
+- Banco: esquema versão 2 (`rnq_receber_envio`, `rnq_pipeline_registrar`, `rnq_painel_status`).
+- Testes: 168 unitários, 40 do banco e funções, 21 de ponta a ponta do painel, 30 do site.
+
 ## 2.6.2 — 16/10/2026 · Painel ligado ao mapa
 
 - Botão **"Ver o mapa"** no topo do painel: abre o mapa público em outra aba (no idioma do painel).

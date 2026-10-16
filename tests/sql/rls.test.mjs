@@ -83,7 +83,7 @@ before(async () => {
 test('schema roda duas vezes sem erro e responde ao ping (anônimo)', async () => {
   await anonimo();
   const r = await um('select rnq_ping() as p');
-  assert.deepEqual(r.p, { ok: true, schema: '1' });
+  assert.deepEqual(r.p, { ok: true, schema: '2' });
 });
 
 test('anônimo não lê nenhuma tabela', async () => {
@@ -320,4 +320,62 @@ test('RF26: cadastro de quem escolheu ficar fora do mapa não pode ser aprovado'
   await falha(sql("select rnq_decidir($1, 'aprovado', null)", [id]), 'não pode ser aprovado');
   const r = await um("select (rnq_decidir($1, 'recusado', 'escolheu ficar fora')).status", [id]);
   assert.equal(r.status, 'recusado');
+});
+
+test('envio que chega na hora pelo site: entra pendente, não duplica e herda comunidades', async () => {
+  await servico();
+  const r = (await um("select rnq_receber_envio($1::jsonb) as r", [JSON.stringify({ itens: [
+    { tipo: 'mural', item_id: 'site-1', comunidades: ['esg'], titulo: 'Pedido: ajuda', conteudo: { campos: [] },
+      privado: { campos: [['Contato (privado)', 'x@site.org']] }, recebido_em: '2026-10-16T16:13:00-03:00' },
+    { tipo: 'resposta', item_id: 'site-2', comunidades: [], ref: 'site-1', titulo: 'Ana → ajuda' },
+    { tipo: 'mural', item_id: 'm-tec', comunidades: [], titulo: 'NÃO pode sobrescrever' },
+  ] })])).r;
+  assert.equal(r.novos, 2);
+  const s1 = await um("select status, fonte, comunidades from moderacao where item_id = 'site-1'");
+  assert.deepEqual(s1, { status: 'pendente', fonte: 'site', comunidades: ['esg'] });
+  assert.deepEqual((await um("select comunidades from moderacao where item_id = 'site-2'")).comunidades, ['esg']);
+  assert.notEqual((await um("select titulo from moderacao where item_id = 'm-tec'")).titulo, 'NÃO pode sobrescrever');
+  assert.ok((await sql("select * from auditoria where acao = 'site.envio'")).length >= 2);
+  // tecelão de ESG vê na hora; de fora, não
+  await como(U.tecB, 'aal2');
+  assert.ok((await sql("select * from moderacao where item_id = 'site-1'")).length === 1);
+  await como(U.tecA);
+  assert.equal((await sql("select * from moderacao where item_id = 'site-1'")).length, 0);
+});
+
+test('a sincronização do Mac não apaga o que acabou de chegar pelo site; depois assume o item', async () => {
+  await servico();
+  await sincronizar();                                   // planilha ainda sem site-1
+  assert.equal((await sql("select * from moderacao where item_id = 'site-1'")).length, 1);
+  const item = { tipo: 'mural', item_id: 'site-1', comunidades: ['esg', 'tecnologia'], titulo: 'Pedido: ajuda',
+                 conteudo: {}, privado: {}, status_planilha: 'pendente' };
+  await sincronizar([...ITENS, item]);
+  assert.deepEqual(await um("select fonte, comunidades from moderacao where item_id = 'site-1'"),
+                   { fonte: 'planilha', comunidades: ['esg', 'tecnologia'] });
+  await sincronizar();                                   // saiu da planilha: agora pode apagar
+  assert.equal((await sql("select * from moderacao where item_id = 'site-1'")).length, 0);
+});
+
+test('envio do site só com a chave secreta; formato inválido recusado', async () => {
+  for (const entrar of [() => como(U.farley, 'aal2'), anonimo]) {
+    await entrar();
+    await falha(sql("select rnq_receber_envio('{\"itens\":[]}'::jsonb)"), 'permission denied');
+    await falha(sql("select rnq_pipeline_registrar('ultima_publicacao', '{}'::jsonb)"), 'permission denied');
+  }
+  await servico();
+  await falha(sql("select rnq_receber_envio('{\"itens\": 1}'::jsonb)"), 'inválido');
+  await falha(sql("select rnq_pipeline_registrar('qualquer', '{}'::jsonb)"), 'inválida');
+});
+
+test('status do painel: última publicação e rotina diária, só para a equipe', async () => {
+  await servico();
+  await sql("select rnq_pipeline_registrar('ultima_publicacao', $1::jsonb)", [JSON.stringify({ quando: '2026-10-17T07:01:00-03:00', ok: true })]);
+  await sql("select rnq_pipeline_registrar('rotina_diaria', $1::jsonb)", [JSON.stringify({ hora: '07:00', ligada: true })]);
+  await como(U.tecB, 'aal2');
+  const s = (await um('select rnq_painel_status() as s')).s;
+  assert.equal(s.ultima_publicacao.ok, true);
+  assert.equal(s.rotina_diaria.hora, '07:00');
+  assert.ok(s.ultima_atualizacao);
+  await como(U.fora, 'aal2');
+  assert.equal((await um('select rnq_painel_status() as s')).s, null);
 });

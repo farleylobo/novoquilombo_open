@@ -98,6 +98,10 @@
                    { papel: dados.papel, comunidades: dados.comunidades || [] });
       return { ok: true, novo: !existente, convite_enviado: !existente };
     }
+    async painelStatus() {
+      return { ultima_atualizacao: this.d.gerado_em, rotina_diaria: { ligada: true, hora: '07:00' },
+               ultima_publicacao: { quando: this.d.gerado_em, ok: true, automatica: true } };
+    }
     async auditoria() {
       if (!this.ehAdmin()) erro('Só admin vê o histórico', '42501');
       return copia(this.d.auditoria);

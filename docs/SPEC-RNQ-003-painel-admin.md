@@ -31,6 +31,8 @@ O painel do tecelão é um HTML local, gerado no Mac do Farley. Isso causa dois 
 | D8 | Primeira equipe | Só o Farley. A entrada da June está em standby |
 | D9 | Quem aprova | Tecelão aprova os itens das suas comunidades. Admin aprova tudo |
 | D10 | Autonomia | Admins gerem a equipe pelo próprio painel |
+| D11 (16/10) | Chegada dos envios | Na hora: aviso do Netlify → Edge Function `receber` → Moderação. Sem terminal |
+| D12 (16/10) | Atualização do mapa | Uma vez por dia, automática, por rotina no Mac (a rede ainda não está ativa) |
 
 ## Como foi construído
 
@@ -69,6 +71,9 @@ O painel do tecelão é um HTML local, gerado no Mac do Farley. Isso causa dois 
 | RF27 | Só admin convida ou muda papel, comunidades e acesso | `rnq_equipe_atualizar` e Edge Function |
 | RF28 | O último admin ativo não sai | gatilho `equipe_ultimo_admin` |
 | RF29 | Tirar o acesso corta na hora | RLS (`ativo`) e remoção das sessões |
+| RF30 | Envio do mapa entra na Moderação na hora, igual ao que o pipeline montaria | função `receber` (chave na URL, site conferido, 64 KB) + `rnq_receber_envio`; paridade em `tests/test_receber.py` |
+| RF31 | O pipeline não apaga nem sobrescreve decisão de item que chegou pelo site | coluna `moderacao.fonte` + `rnq_pipeline_sincronizar` |
+| RF32 | Painel mostra quando o mapa foi publicado e se a rotina falhou | `rnq_painel_status`, `rnq_pipeline_registrar`, faixa do mapa |
 
 ## Critérios de aceite e testes
 
@@ -82,6 +87,8 @@ O painel do tecelão é um HTML local, gerado no Mac do Farley. Isso causa dois 
 | CA26 · admin gere a equipe sozinho | e2e "equipe" e "tirar o acesso", RLS |
 | CA27 · tecelão não muda o próprio papel | `tests/sql/rls.test.mjs` |
 | CA28 · último admin | `tests/sql/rls.test.mjs`, e2e |
+| CA29 · envio aparece no painel sem terminal | `tests/sql/receber.test.mjs`, `tests/test_receber.py`, e2e "chegou pelo site" |
+| CA30 · rotina diária publica e registra o resultado | `tests/test_painel_admin.py` (Rotina), e2e "faixa do mapa" |
 
 ## Fases
 
@@ -90,9 +97,10 @@ O painel do tecelão é um HTML local, gerado no Mac do Farley. Isso causa dois 
 | F0 · Base (banco, login, MFA, Equipe) | Pronta. Falta o Farley rodar `configurar` |
 | F1 · Leitura (visões PT/EN por escopo) | Pronta |
 | F2 · Moderação no painel | Pronta |
-| F3 · Tempo real (site lendo do banco, formulários direto no Supabase, papel de moderador) | Para depois |
+| F2.5 · Automação (envios na hora, mapa diário) | Pronta (2.7.0). Falta rodar `configurar` e `automatizar` no Mac |
+| F3 · Tempo real no site (site lendo do banco, papel de moderador) | Para depois |
 
-Até a F3, uma aprovação chega ao site público quando o Farley roda `atualizar.py` + `publicar.py`.
+Até a F3, uma aprovação chega ao site público na rotina diária, ou antes, com `atualizar.py` + `publicar.py`.
 
 ## Segurança e LGPD
 
@@ -108,5 +116,6 @@ Os detalhes estão em `docs/PAINEL-ADMIN.md`. Em resumo:
 
 1. **E-mail próprio (SMTP)** para convidar outras pessoas: o padrão do Supabase só entrega para a equipe do projeto e envia 2 e-mails por hora.
 2. **Ativar o fluxo "manter ativo"** (segredos no GitHub) ou migrar para um plano pago quando houver uso real.
-3. **F3:** formulários gravando direto no Supabase e site lendo os itens aprovados.
-4. **June (standby):** e-mail, MFA e LGPD.
+3. **F3:** site lendo os itens aprovados direto do banco.
+4. **Permissão do macOS** para a rotina em segundo plano (Acesso Total ao Disco), a confirmar no Mac.
+5. **June (standby):** e-mail, MFA e LGPD.

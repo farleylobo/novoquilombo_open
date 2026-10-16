@@ -5,12 +5,17 @@
     python3 painel_admin.py publicar --so-pasta  # só monta a pasta, para arrastar no Netlify
     python3 painel_admin.py status               # confere a conexão e mostra os números do painel
     python3 painel_admin.py demo                 # regenera admin/demo-dados.js (rede fictícia, modo demonstração)
+    python3 painel_admin.py ligar-formularios    # os formulários do mapa avisam o painel na hora (Netlify -> Supabase)
+    python3 painel_admin.py automatizar          # o Mac atualiza e publica o mapa sozinho, 1 vez por dia (7h)
+    python3 painel_admin.py automatizar --desligar
+    python3 painel_admin.py rotina               # o que a rotina diária faz (dá para rodar à mão, para testar)
 
-O dia a dia continua sendo só "python3 atualizar.py": ele traz as decisões do painel e manda os dados novos.
+Com a rotina ligada, o dia a dia é só o painel: os envios chegam na hora e o mapa se atualiza toda manhã.
 Passo a passo completo: docs/PAINEL-ADMIN.md.
 """
 import argparse
 import json
+import secrets
 import os
 import re
 import shutil
@@ -136,16 +141,48 @@ def campos_auth(painel_url, c):
     return campos
 
 
-def ler_funcao():
+def ler_funcao(pasta=None):
+    pasta = pasta or FUNCAO
     arquivos = {}
-    for nome in ('index.ts', 'logica.js'):
-        with open(os.path.join(FUNCAO, nome), encoding='utf-8') as fh:  # noqa: PTH123
-            arquivos[nome] = fh.read()
+    for nome in ('index.ts', 'logica.js', 'contrato.json'):
+        caminho = os.path.join(pasta, nome)
+        if os.path.exists(caminho):
+            with open(caminho, encoding='utf-8') as fh:
+                arquivos[nome] = fh.read()
     return arquivos
 
 
+FUNCAO_RECEBER = os.path.join(ADMIN, 'supabase', 'functions', 'receber')
+NOME_SITE_MAPA = 'mapa-novoquilombo'
+
+
+def url_receber(c):
+    return f'{c["SUPABASE_URL"].rstrip("/")}/functions/v1/receber?chave={c["RNQ_RECEBER_SEGREDO"]}'
+
+
+def ligar_formularios(c=None, hooks=None):
+    """Faz cada formulário do mapa avisar o painel na hora (Netlify -> Edge Function "receber")."""
+    from rnq.supabase import NetlifyHooks
+    c = cfg() if c is None else c
+    if not (c.get('NETLIFY_TOKEN') and c.get('NETLIFY_SITE_ID')):
+        print('  ! Sem NETLIFY_TOKEN no .env: os envios do site só chegam ao painel no atualizar.py.')
+        return None
+    if not (c.get('SUPABASE_URL') and c.get('RNQ_RECEBER_SEGREDO')):
+        raise ErroSupabase('Rode "python3 painel_admin.py configurar" antes (falta a função "receber").')
+    forms = [f for f, v in admin.contrato()['formularios'].items() if v['tipo']]
+    h = hooks or NetlifyHooks(c['NETLIFY_TOKEN'], c['NETLIFY_SITE_ID'])
+    r = h.ligar(url_receber(c), forms)
+    ok(f'formulários do mapa avisam o painel na hora: {len(r["formularios"])} ligados '
+       f'({r["criados"]} novos, {r["mantidos"]} já estavam, {r["apagados"]} antigos removidos)')
+    faltam = sorted(set(forms) - set(r['formularios']))
+    if faltam:
+        print('  ! Formulários ainda não vistos pelo Netlify (aparecem depois do 1º envio ou da publicação):',
+              ', '.join(faltam))
+    return r
+
+
 # ------------------------------------------------------------------------------------------------- comandos
-def configurar(c=None, gestao=None, banco=None):
+def configurar(c=None, gestao=None, banco=None, hooks=None):
     c = cfg() if c is None else c
     faltam = [k for k in ('SUPABASE_ACCESS_TOKEN', 'SUPABASE_PROJECT_REF', 'RNQ_ADMIN_EMAIL') if not c.get(k)]
     if faltam:
@@ -178,8 +215,17 @@ def configurar(c=None, gestao=None, banco=None):
     ok('chaves: a publicável em admin/config.js, a secreta só no .env deste Mac')
 
     g.publicar_funcao('convidar', ler_funcao())
-    g.segredos({'RNQ_PAINEL_URL': painel_url, 'RNQ_CHAVE_PUBLICA': publica, 'RNQ_CHAVE_SECRETA': secreta})
     ok('função de convite publicada (Edge Function "convidar")')
+
+    segredo = c.get('RNQ_RECEBER_SEGREDO') or secrets.token_urlsafe(32)
+    admin.gravar_contrato(os.path.join(FUNCAO_RECEBER, 'contrato.json'))
+    g.publicar_funcao('receber', ler_funcao(FUNCAO_RECEBER), verificar_jwt=False)
+    g.exigir_login_na_funcao('receber', False)     # o Netlify não faz login: quem protege é a chave na URL
+    gravar_env({'RNQ_RECEBER_SEGREDO': segredo})
+    g.segredos({'RNQ_PAINEL_URL': painel_url, 'RNQ_CHAVE_PUBLICA': publica, 'RNQ_CHAVE_SECRETA': secreta,
+                'RNQ_RECEBER_SEGREDO': segredo, 'RNQ_SITE_NOME': c.get('RNQ_SITE_NOME') or NOME_SITE_MAPA})
+    ok('função que recebe os envios do site na hora (Edge Function "receber")')
+    ligar_formularios(dict(c, SUPABASE_URL=url, RNQ_RECEBER_SEGREDO=segredo), hooks=hooks)
 
     b = banco or Banco(url, secreta)
     email = c['RNQ_ADMIN_EMAIL'].strip().lower()
@@ -286,6 +332,117 @@ def publicar(so_pasta=False, demo=False, c=None):
     return subprocess.run(cmd, cwd=AQUI, env=env).returncode
 
 
+# ------------------------------------------------------------------------------------------------- rotina diária
+ROTULO = 'org.novoquilombo.rotina'
+LOG_ROTINA = os.path.expanduser('~/Library/Logs/rnq-rotina.log')
+
+
+def registrar(c, chave, valor, banco=None):
+    """Conta ao painel o que o Mac fez (aparece no topo da Visão da rede e da Moderação). Melhor esforço."""
+    if not admin.configurado(c):
+        return False
+    try:
+        (banco or admin.banco(c)).rpc('rnq_pipeline_registrar', {'p_chave': chave, 'p_valor': valor})
+        return True
+    except ErroSupabase as err:
+        print('  (não consegui avisar o painel:', err, ')')
+        return False
+
+
+def agora_iso():
+    return datetime.now(admin.FUSO).isoformat(timespec='seconds')
+
+
+def rotina(c=None, rodar=None, banco=None):
+    """Atualiza (formulários + decisões do painel) e publica o mapa. É o que o Mac faz sozinho todo dia."""
+    c = cfg() if c is None else c
+    rodar = rodar or (lambda cmd: subprocess.run(cmd, cwd=AQUI, capture_output=True, text=True,
+                                                 env=dict(os.environ, RNQ_ROTINA='1')))
+    print(f'--- rotina {agora_iso()}')
+    etapas = [('atualizar', [sys.executable, os.path.join(AQUI, 'atualizar.py')]),
+              ('publicar', [sys.executable, os.path.join(AQUI, 'publicar.py')])]
+    resultado = {'quando': agora_iso(), 'ok': True, 'automatica': True}
+    for nome, cmd in etapas:
+        r = rodar(cmd)
+        saida = ((r.stdout or '') + (r.stderr or '')).strip()
+        print(f'[{nome}] código {r.returncode}')
+        print(saida[-4000:])
+        if r.returncode != 0:
+            linhas = [l for l in saida.splitlines() if l.strip()]
+            resultado.update(ok=False, etapa=nome, erro=(linhas[-1] if linhas else f'código {r.returncode}')[:300])
+            break
+    registrar(c, 'ultima_publicacao', resultado, banco)
+    estado = dict(estado_rotina(), ultima_execucao=resultado['quando'], ok=resultado['ok'])
+    registrar(c, 'rotina_diaria', estado, banco)
+    return 0 if resultado['ok'] else 1
+
+
+def caminho_plist():
+    return os.path.expanduser(f'~/Library/LaunchAgents/{ROTULO}.plist')
+
+
+def estado_rotina():
+    import plistlib
+    try:
+        with open(caminho_plist(), 'rb') as fh:
+            p = plistlib.load(fh)
+        h = p.get('StartCalendarInterval', {})
+        return {'ligada': True, 'hora': f'{h.get("Hour", 7):02d}:{h.get("Minute", 0):02d}'}
+    except (OSError, ValueError):
+        return {'ligada': False}
+
+
+def montar_plist(hora, minuto=0, python=None, path_env=None):
+    import plistlib
+    return plistlib.dumps({
+        'Label': ROTULO,
+        'ProgramArguments': [python or sys.executable, os.path.join(AQUI, 'painel_admin.py'), 'rotina'],
+        'WorkingDirectory': AQUI,
+        'StartCalendarInterval': {'Hour': hora, 'Minute': minuto},
+        'EnvironmentVariables': {'PATH': path_env or os.environ.get('PATH', '/usr/local/bin:/usr/bin:/bin')},
+        'StandardOutPath': LOG_ROTINA, 'StandardErrorPath': LOG_ROTINA,
+        'RunAtLoad': False, 'ProcessType': 'Background',
+    })
+
+
+def automatizar(hora=7, desligar=False, c=None, sistema=None, banco=None):
+    """Liga (ou desliga) a rotina diária no macOS: um LaunchAgent que roda "painel_admin.py rotina" às <hora>.
+    Se o Mac estiver dormindo nessa hora, a rotina roda quando ele acordar."""
+    c = cfg() if c is None else c
+    if sys.platform != 'darwin' and sistema is None:
+        print('A rotina diária usa o agendador do macOS (launchd). Rode este comando no Mac.')
+        return 1
+    sistema = sistema or (lambda cmd: subprocess.run(cmd, capture_output=True, text=True))
+    plist = caminho_plist()
+    dominio = f'gui/{os.getuid()}'
+    sistema(['launchctl', 'bootout', dominio, plist])            # se já existia, desliga antes
+    if desligar:
+        if os.path.exists(plist):
+            os.remove(plist)
+        registrar(c, 'rotina_diaria', {'ligada': False, 'desligada_em': agora_iso()}, banco)
+        ok('rotina diária desligada: para levar ao mapa, rode atualizar.py e publicar.py')
+        return 0
+    if not (0 <= hora <= 23):
+        print('Hora inválida (use 0 a 23).')
+        return 1
+    if not shutil.which('npx', path=os.environ.get('PATH')):
+        print('  ! Não achei o npx (Node.js) neste Terminal: a publicação automática vai falhar. Instale em nodejs.org.')
+    os.makedirs(os.path.dirname(plist), exist_ok=True)
+    os.makedirs(os.path.dirname(LOG_ROTINA), exist_ok=True)
+    with open(plist, 'wb') as fh:
+        fh.write(montar_plist(hora))
+    r = sistema(['launchctl', 'bootstrap', dominio, plist])
+    if getattr(r, 'returncode', 0) != 0:
+        print('ERRO ao ligar a rotina no macOS:', (getattr(r, 'stderr', '') or '').strip())
+        return 2
+    registrar(c, 'rotina_diaria', {'ligada': True, 'hora': f'{hora:02d}:00', 'ligada_em': agora_iso()}, banco)
+    ok(f'rotina diária ligada: todo dia às {hora:02d}:00 o Mac atualiza e publica o mapa sozinho')
+    print(f'    Registro do que acontece: {LOG_ROTINA}')
+    print('    Se o Mac estiver dormindo nessa hora, ela roda quando ele acordar.')
+    print(f'    Para testar agora: launchctl kickstart {dominio}/{ROTULO}')
+    return 0
+
+
 # ------------------------------------------------------------------------------------------------- demonstração
 DEMO_EQUIPE = [
     {'nome': 'Ana Demonstração', 'email': 'ana@exemplo.org', 'papel': 'admin', 'comunidades': [], 'mfa': True},
@@ -314,7 +471,7 @@ def montar_demo(agora=None):
     itens = []
     for i, it in enumerate(pk['itens'], 1):
         it = dict(it, id=i, status='pendente', decidido_por_nome=None, decidido_em=None, motivo=None,
-                  origem_decisao=None, atualizado_em=it['recebido_em'])
+                  origem_decisao=None, atualizado_em=it['recebido_em'], fonte='site' if i == 2 else 'planilha')
         it.pop('status_planilha', None)
         itens.append(it)
     # algumas decisões já tomadas, para o histórico não ficar vazio
@@ -359,6 +516,11 @@ def main(argv=None):
     p.add_argument('--demo', action='store_true', help='publica só o modo demonstração (sem config.js)')
     sub.add_parser('status', help='confere a conexão e mostra os números')
     sub.add_parser('demo', help='regenera admin/demo-dados.js')
+    sub.add_parser('ligar-formularios', help='os formulários do mapa avisam o painel na hora')
+    p = sub.add_parser('automatizar', help='liga a rotina diária (atualizar + publicar) no macOS')
+    p.add_argument('--hora', type=int, default=7, help='hora do dia (0-23), padrão 7')
+    p.add_argument('--desligar', action='store_true', help='desliga a rotina diária')
+    sub.add_parser('rotina', help='atualiza e publica o mapa (o que a rotina diária faz)')
     a = ap.parse_args(argv)
     try:
         if a.comando == 'configurar':
@@ -367,6 +529,12 @@ def main(argv=None):
             return publicar(so_pasta=a.so_pasta, demo=a.demo)
         if a.comando == 'status':
             return status()
+        if a.comando == 'ligar-formularios':
+            return 0 if ligar_formularios() is not None else 1
+        if a.comando == 'automatizar':
+            return automatizar(hora=a.hora, desligar=a.desligar)
+        if a.comando == 'rotina':
+            return rotina()
         return demo()
     except (ErroSupabase, FileNotFoundError, RuntimeError) as err:
         print('ERRO:', err)

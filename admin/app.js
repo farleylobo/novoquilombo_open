@@ -17,7 +17,7 @@
     api: null, idioma: 'pt', perfil: null, aba: 'visao', escopo: null,
     comunidades: [], snapshots: [], itens: [], equipe: [], auditoria: [],
     filtros: { status: 'pendente', tipo: '', comunidade: '', busca: '' },
-    abertos: new Set(), recusando: null, idiomaEscolhido: false,
+    abertos: new Set(), recusando: null, idiomaEscolhido: false, status: null, carregadoEm: 0,
   };
   const T = () => I18N[E.idioma];
   window.RNQ_PAINEL = E;                 // para os testes e2e
@@ -252,11 +252,13 @@
   // ------------------------------------------------------------------ dados
   async function carregarTudo() {
     const admin = E.perfil.papel === 'admin';
-    const [coms, snaps, itens, equipe, aud] = await Promise.all([
+    const [coms, snaps, itens, equipe, aud, st] = await Promise.all([
       E.api.comunidades(), E.api.snapshots(), E.api.moderacao(),
-      admin ? E.api.equipe() : Promise.resolve([]), admin ? E.api.auditoria() : Promise.resolve([])]);
+      admin ? E.api.equipe() : Promise.resolve([]), admin ? E.api.auditoria() : Promise.resolve([]),
+      E.api.painelStatus().catch(() => null)]);
     E.comunidades = coms || []; E.snapshots = snaps || []; E.itens = itens || [];
-    E.equipe = equipe || []; E.auditoria = aud || [];
+    E.equipe = equipe || []; E.auditoria = aud || []; E.status = st || null;
+    E.carregadoEm = Date.now();
     const escopos = E.snapshots.map(s => s.escopo);
     if (!escopos.includes(E.escopo)) E.escopo = escopos.includes('rede') ? 'rede' : (escopos[0] || null);
     if (!admin && ['equipe', 'historico'].includes(E.aba)) E.aba = 'visao';
@@ -327,6 +329,7 @@
       nomeEscopo(a).localeCompare(nomeEscopo(b), t.lang)));
     main.append(h('div', { class: 'cabeca' },
       h('div', {}, h('h2', {}, nomeEscopo(snap)), h('p', {}, t.atualizado(data(snap.gerado_em))))));
+    main.append(faixaMapa());
     if (ordem.length > 1) {
       main.append(h('div', { class: 'escopos', role: 'group', 'aria-label': t.escopo },
         ordem.map(s => h('button', { type: 'button', class: 'escopo', 'aria-pressed': String(s.escopo === snap.escopo),
@@ -366,6 +369,25 @@
     }
   });
 
+  // Situação do mapa público: quando foi publicado e quando se atualiza de novo (rotina diária do Mac).
+  function faixaMapa() {
+    const t = T(), s = E.status || {};
+    const rot = s.rotina_diaria || {}, pub = s.ultima_publicacao || null;
+    const quando = pub && pub.quando ? t.ultima_publicacao(data(pub.quando)) : t.sem_publicacao;
+    const partes = [rot.ligada ? t.rotina_ligada(rot.hora || '07:00') : t.rotina_desligada, ' ', quando];
+    const falhou = pub && pub.ok === false;
+    return h('p', { class: 'aviso-vale' + (falhou ? ' falhou' : ''), 'data-teste': 'faixa-mapa', role: 'note' },
+      ...partes, falhou ? h('b', {}, ' ' + t.rotina_falhou(pub.erro || '')) : null);
+  }
+  async function recarregar() {
+    try { await carregarTudo(); desenharApp(); } catch (e) { toast(erroAmigavel(e), 'erro'); }
+  }
+  // Envios chegam na hora pelo site: ao voltar para a aba do painel, a lista se atualiza sozinha.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && E.perfil && E.carregadoEm && Date.now() - E.carregadoEm > 30000
+        && E.recusando === null) recarregar();
+  });
+
   // ---- moderação
   const TAREFA = new Set(['resposta', 'participacao']);
   function rotuloStatus(i) {
@@ -397,14 +419,15 @@
     const busca = h('input', { type: 'search', id: 'f-busca', value: E.filtros.busca, oninput: (ev) => {
       E.filtros.busca = ev.target.value; desenharLista(lista); } });
     const lista = h('div', { class: 'lista', 'aria-live': 'polite' });
-    main.append(h('div', { class: 'cabeca' }, h('div', {}, h('h2', {}, t.aba_moderacao))),
+    main.append(h('div', { class: 'cabeca' }, h('div', {}, h('h2', {}, t.aba_moderacao)),
+        h('button', { type: 'button', class: 'btn claro', 'data-acao': 'recarregar', onclick: recarregar }, t.recarregar)),
       h('div', { class: 'mod' },
         h('aside', { class: 'filtros' },
           h('fieldset', { class: 'status' }, h('legend', {}, t.filtro_status), seg),
           h('fieldset', {}, h('legend', {}, h('label', { for: 'f-tipo' }, t.filtro_tipo)), selTipo),
           h('fieldset', {}, h('legend', {}, h('label', { for: 'f-com' }, t.filtro_comunidade)), selCom),
           h('fieldset', { class: 'busca' }, h('legend', {}, h('label', { for: 'f-busca' }, t.filtro_busca)), busca)),
-        h('section', {}, h('p', { class: 'aviso-vale' }, t.vale_quando), lista)));
+        h('section', {}, faixaMapa(), lista)));
     desenharLista(lista);
   }
   function desenharLista(lista) {
@@ -431,6 +454,7 @@
         h('h3', {}, i.titulo),
         h('span', { class: 'estado ' + i.status }, rotuloStatus(i))),
       h('div', { class: 'meta' },
+        i.fonte === 'site' ? h('span', { class: 'novo', title: t.chegou_site_ajuda }, t.chegou_site) : null,
         i.recebido_em ? h('span', {}, t.recebido(data(i.recebido_em, false))) : null,
         i.comunidades.length ? h('span', { class: 'chips' }, i.comunidades.map(c => h('span', { class: 'chip' }, nomeComunidade(c))))
           : h('span', {}, t.sem_comunidade_item)),

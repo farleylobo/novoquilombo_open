@@ -35,8 +35,11 @@ class GestaoFalsa:
         return [{'type': 'publishable', 'api_key': 'sb_publishable_ABC'},
                 {'type': 'secret', 'api_key': 'sb_secret_' + 'X' * 30}]
 
-    def publicar_funcao(self, slug, arquivos):
-        self.chamadas.append(('funcao', slug, sorted(arquivos)))
+    def publicar_funcao(self, slug, arquivos, verificar_jwt=True):
+        self.chamadas.append(('funcao', slug, sorted(arquivos), verificar_jwt))
+
+    def exigir_login_na_funcao(self, slug, exigir):
+        self.chamadas.append(('login_funcao', slug, exigir))
 
     def segredos(self, pares):
         self.chamadas.append(('segredos', pares))
@@ -92,15 +95,21 @@ class Configurar(unittest.TestCase):
         g, b = GestaoFalsa(), BancoFalso()
         r, saida = self.rodar(g, b)
         self.assertEqual(r, 0)
-        self.assertEqual([c[0] for c in g.chamadas], ['sql', 'auth', 'funcao', 'segredos'])
+        self.assertEqual([c[0] for c in g.chamadas], ['sql', 'auth', 'funcao', 'funcao', 'login_funcao', 'segredos'])
+        self.assertEqual(g.chamadas[3][1:], ('receber', ['contrato.json', 'index.ts', 'logica.js'], False))
+        self.assertEqual(g.chamadas[4], ('login_funcao', 'receber', False))
         auth = g.chamadas[1][1]
         self.assertTrue(auth['disable_signup'])
         self.assertTrue(auth['mfa_totp_enroll_enabled'] and auth['mfa_totp_verify_enabled'])
         self.assertEqual(auth['site_url'], 'https://painel-novoquilombo.netlify.app')
         self.assertNotIn('mailer_templates_magic_link_content', auth, 'plano gratuito sem SMTP não aceita modelos')
-        self.assertEqual(g.chamadas[2][2], ['index.ts', 'logica.js'])
-        self.assertEqual(g.chamadas[3][1]['RNQ_PAINEL_URL'], 'https://painel-novoquilombo.netlify.app')
-        self.assertEqual(g.chamadas[3][1]['RNQ_CHAVE_PUBLICA'], 'sb_publishable_ABC')
+        self.assertEqual(g.chamadas[2][1:3], ('convidar', ['index.ts', 'logica.js']))
+        seg = g.chamadas[5][1]
+        self.assertEqual(seg['RNQ_PAINEL_URL'], 'https://painel-novoquilombo.netlify.app')
+        self.assertEqual(seg['RNQ_CHAVE_PUBLICA'], 'sb_publishable_ABC')
+        self.assertGreaterEqual(len(seg['RNQ_RECEBER_SEGREDO']), 32)
+        self.assertEqual(seg['RNQ_SITE_NOME'], 'mapa-novoquilombo')
+        self.assertNotIn(seg['RNQ_RECEBER_SEGREDO'], saida, 'a chave da função não aparece no Terminal')
         self.assertNotIn('sb_secret_', saida)
         with open(os.path.join(self.admin, 'config.js'), encoding='utf-8') as fh:
             cfgjs = fh.read()
@@ -110,6 +119,8 @@ class Configurar(unittest.TestCase):
         with open(os.path.join(self.pasta, '.env'), encoding='utf-8') as fh:
             env = fh.read()
         self.assertIn('SUPABASE_SECRET_KEY=sb_secret_', env)
+        self.assertIn('RNQ_RECEBER_SEGREDO=' + seg['RNQ_RECEBER_SEGREDO'], env)
+        self.assertIn('Sem NETLIFY_TOKEN', saida)
         self.assertIn('SUPABASE_URL=https://abcdefghijklmnopqrst.supabase.co', env)
         reg = [c for c in b.chamadas if c[0] == 'rnq_convite_registrar'][0][1]
         self.assertEqual((reg['p_email'], reg['p_papel'], reg['p_user']), ('farley@exemplo.org', 'admin', 'u-novo'))
@@ -139,6 +150,110 @@ class Configurar(unittest.TestCase):
             painel_admin.escrever_config('https://x.supabase.co', 'sb_secret_' + 'Y' * 30, self.admin)
 
 
+
+
+class HooksFalsos:
+    def __init__(self, existentes=()):
+        self.avisos_ = list(existentes)
+        self.criados, self.apagados = [], []
+
+    def ligar(self, url, nomes):
+        from rnq.supabase import NetlifyHooks
+        h = NetlifyHooks.__new__(NetlifyHooks)
+        forms = [{'name': n, 'id': 'f-' + n} for n in nomes] + [{'name': 'opt-out', 'id': 'f-opt-out'}]
+        h.formularios = lambda: forms
+        h.avisos = lambda: self.avisos_
+        h.criar = lambda fid, u: self.criados.append((fid, u))
+        h.apagar = lambda hid: self.apagados.append(hid)
+        return NetlifyHooks.ligar(h, url, nomes)
+
+
+class LigarFormularios(unittest.TestCase):
+    C = {'NETLIFY_TOKEN': 'nfp_x', 'NETLIFY_SITE_ID': 'site', 'SUPABASE_URL': 'https://abc.supabase.co',
+         'RNQ_RECEBER_SEGREDO': 's' * 40}
+
+    def test_um_aviso_por_formulario_moderado(self):
+        h = HooksFalsos()
+        with redirect_stdout(io.StringIO()):
+            r = painel_admin.ligar_formularios(self.C, hooks=h)
+        self.assertEqual(r['criados'], 7)
+        self.assertNotIn('f-opt-out', [f for f, _ in h.criados], 'saídas seguem pelo Mac')
+        self.assertTrue(all(u == 'https://abc.supabase.co/functions/v1/receber?chave=' + 's' * 40 for _, u in h.criados))
+
+    def test_rodar_de_novo_nao_duplica_e_troca_chave_antiga(self):
+        url = painel_admin.url_receber(self.C)
+        existentes = [{'id': 'h1', 'event': 'submission_created', 'form_id': 'f-mural', 'data': {'url': url}},
+                      {'id': 'h2', 'event': 'submission_created', 'form_id': 'f-perfil',
+                       'data': {'url': 'https://abc.supabase.co/functions/v1/receber?chave=velha'}},
+                      {'id': 'h3', 'event': 'submission_created', 'form_id': 'f-mural', 'data': {'url': 'https://outro.app/x'}}]
+        h = HooksFalsos(existentes)
+        with redirect_stdout(io.StringIO()):
+            r = painel_admin.ligar_formularios(self.C, hooks=h)
+        self.assertEqual((r['mantidos'], r['apagados'], r['criados']), (1, 1, 6))
+        self.assertEqual(h.apagados, ['h2'], 'não mexe em avisos de outros serviços')
+
+    def test_sem_token_do_netlify_explica(self):
+        with redirect_stdout(io.StringIO()) as s:
+            self.assertIsNone(painel_admin.ligar_formularios({}))
+        self.assertIn('NETLIFY_TOKEN', s.getvalue())
+
+
+class Rotina(unittest.TestCase):
+    CFG = {'SUPABASE_URL': 'https://x.supabase.co', 'SUPABASE_SECRET_KEY': 'sb_secret_x'}
+
+    def rodar(self, codigos):
+        feitos = []
+
+        def rodar(cmd):
+            feitos.append(os.path.basename(cmd[1]))
+            return mock.Mock(returncode=codigos.get(os.path.basename(cmd[1]), 0), stdout='saída\núltima linha', stderr='')
+        b = BancoFalso()
+        with redirect_stdout(io.StringIO()):
+            r = painel_admin.rotina(self.CFG, rodar=rodar, banco=b)
+        regs = {a['p_chave']: a['p_valor'] for n, a in b.chamadas if n == 'rnq_pipeline_registrar'}
+        return r, feitos, regs
+
+    def test_atualiza_publica_e_avisa_o_painel(self):
+        r, feitos, regs = self.rodar({})
+        self.assertEqual(r, 0)
+        self.assertEqual(feitos, ['atualizar.py', 'publicar.py'])
+        self.assertTrue(regs['ultima_publicacao']['ok'])
+        self.assertTrue(regs['ultima_publicacao']['automatica'])
+        self.assertTrue(regs['rotina_diaria']['ok'])
+
+    def test_se_atualizar_falha_nao_publica_e_mostra_o_erro_no_painel(self):
+        r, feitos, regs = self.rodar({'atualizar.py': 3})
+        self.assertEqual(r, 1)
+        self.assertEqual(feitos, ['atualizar.py'])
+        self.assertEqual(regs['ultima_publicacao']['etapa'], 'atualizar')
+        self.assertEqual(regs['ultima_publicacao']['erro'], 'última linha')
+
+    def test_plist_do_macos(self):
+        import plistlib
+        p = plistlib.loads(painel_admin.montar_plist(7, python='/usr/bin/python3', path_env='/usr/local/bin:/usr/bin'))
+        self.assertEqual(p['Label'], 'org.novoquilombo.rotina')
+        self.assertEqual(p['StartCalendarInterval'], {'Hour': 7, 'Minute': 0})
+        self.assertEqual(p['ProgramArguments'][1:], [os.path.join(painel_admin.AQUI, 'painel_admin.py'), 'rotina'])
+        self.assertEqual(p['EnvironmentVariables']['PATH'], '/usr/local/bin:/usr/bin', 'precisa achar o npx')
+        self.assertFalse(p['RunAtLoad'])
+
+    def test_automatizar_liga_e_desliga(self):
+        home = tempfile.mkdtemp()
+        cmds = []
+        sistema = lambda cmd: cmds.append(cmd) or mock.Mock(returncode=0, stderr='')
+        b = BancoFalso()
+        with mock.patch.dict(os.environ, {'HOME': home}), redirect_stdout(io.StringIO()) as s:
+            self.assertEqual(painel_admin.automatizar(7, c=self.CFG, sistema=sistema, banco=b), 0)
+            self.assertTrue(os.path.exists(painel_admin.caminho_plist()))
+            self.assertEqual(painel_admin.estado_rotina(), {'ligada': True, 'hora': '07:00'})
+            self.assertEqual(painel_admin.automatizar(25, c=self.CFG, sistema=sistema, banco=b), 1)
+            self.assertEqual(painel_admin.automatizar(desligar=True, c=self.CFG, sistema=sistema, banco=b), 0)
+            self.assertFalse(os.path.exists(painel_admin.caminho_plist()))
+        self.assertIn(['launchctl', 'bootstrap', f'gui/{os.getuid()}', os.path.join(home, 'Library/LaunchAgents/org.novoquilombo.rotina.plist')], cmds)
+        self.assertIn('todo dia às 07:00', s.getvalue())
+        estados = [a['p_valor'] for n, a in b.chamadas if n == 'rnq_pipeline_registrar']
+        self.assertEqual([e['ligada'] for e in estados], [True, False])
+        shutil.rmtree(home)
 
 
 class Env(unittest.TestCase):

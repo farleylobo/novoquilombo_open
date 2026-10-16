@@ -137,7 +137,10 @@ iframe.visao { width: 100%; border: 1px solid var(--linha); border-radius: var(-
   cursor: pointer; display: flex; justify-content: space-between; gap: 8px; }
 .segmento button:hover { background: var(--linho); }
 .segmento button[aria-pressed=true] { background: var(--linho); border-color: var(--linha); font-weight: 600; }
-.aviso-vale { font-size: 14px; color: var(--suave); border-left: 3px solid var(--ouro); padding: 2px 0 2px 10px; margin: 0 0 16px; }
+.aviso-vale { font-size: 14px; color: var(--suave); border-left: 3px solid var(--ouro); padding: 2px 0 2px 10px; margin: 0 0 16px; max-width: 80ch; }
+.aviso-vale.falhou { border-left-color: var(--cinabrio); }
+.aviso-vale.falhou b { color: #6E2417; }
+.novo { font-size: 13px; font-weight: 700; color: #1E4A3A; background: var(--malaquita-claro); border-radius: 6px; padding: 0 8px; }
 .lista { display: grid; gap: 12px; }
 .item { background: var(--linho); border: 1px solid var(--linha); border-left: 5px solid var(--ouro); border-radius: var(--r); padding: 14px 16px; }
 .item[data-status=aprovado] { border-left-color: var(--malaquita); }

@@ -110,6 +110,7 @@
       }
       return data;
     }
+    painelStatus() { return this.rpc('rnq_painel_status'); }
     auditoria() {
       return this.tabela(this.sb.from('auditoria').select('*').order('quando', { ascending: false }).limit(300));
     }

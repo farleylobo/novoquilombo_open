@@ -427,3 +427,33 @@ def sincronizar(cfg, contexto, abrir=None, pasta_hist=None):
 
 __all__ = ['TIPOS', 'ErroSupabase', 'aplicar_decisoes', 'buscar_decisoes', 'configurado', 'itens_moderacao',
            'montar_sincronizacao', 'montar_snapshots', 'recortar', 'sincronizar']
+
+
+# ---------------------------------------------------------------- chegada na hora (Edge Function "receber")
+def contrato():
+    """Regras que a Edge Function "receber" usa para montar, na hora, o item de moderação de um envio do site —
+    tiradas das mesmas tabelas do pipeline (tecelagem.FORMULARIOS/ABAS, TIPOS), para o item ficar igual ao que a
+    planilha gera depois. Vai junto com a função (admin/supabase/functions/receber/contrato.json)."""
+    from .tecelagem import FORMULARIOS
+    tema_com = {}
+    for tema, com in C.TEMA_PARA_COMUNIDADE.items():
+        tema_com[chave_nome(tema)] = slug(com)
+    for antigo, novo in C.RENOMEAR_TEMA.items():
+        if novo in C.TEMA_PARA_COMUNIDADE:
+            tema_com[chave_nome(antigo)] = slug(C.TEMA_PARA_COMUNIDADE[novo])
+    tipo_da_aba = {a: t for t, a in ABA_DO_TIPO.items()}
+    return {
+        'versao': 1,
+        'formularios': {f: {'aba': aba, 'tipo': tipo_da_aba.get(aba), 'campos': mapa, 'padrao': padrao}
+                        for f, (aba, mapa, padrao) in FORMULARIOS.items()},
+        'colunas': {aba: [[nome, tipo] for nome, _, tipo, _ in cols] for aba, (_, cols) in ABAS.items()},
+        'tipos': {t: {'aba': v[0], 'coluna': v[1]} for t, v in TIPOS.items()},
+        'no_titulo': {t: list(v) for t, v in NO_TITULO.items()},
+        'tema_comunidade': tema_com,
+    }
+
+
+def gravar_contrato(destino):
+    with open(destino, 'w', encoding='utf-8') as fh:
+        json.dump(contrato(), fh, ensure_ascii=False, indent=1, sort_keys=True)
+    return destino

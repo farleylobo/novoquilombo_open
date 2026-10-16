@@ -75,6 +75,8 @@ create table if not exists public.moderacao (
   atualizado_em     timestamptz not null default now(),
   unique (tipo, item_id)
 );
+-- fonte: 'site' = chegou na hora pelo formulário (Edge Function "receber"); 'planilha' = já passou pelo Mac.
+alter table public.moderacao add column if not exists fonte text not null default 'planilha';
 create index if not exists moderacao_status_idx on public.moderacao (status);
 create index if not exists moderacao_comunidades_idx on public.moderacao using gin (comunidades);
 
@@ -89,7 +91,7 @@ create table if not exists public.auditoria (
 );
 create index if not exists auditoria_quando_idx on public.auditoria (quando desc);
 
-insert into public.rnq_meta (chave, valor) values ('schema_versao', '1')
+insert into public.rnq_meta (chave, valor) values ('schema_versao', '2')
   on conflict (chave) do update set valor = excluded.valor;
 
 -- ---------- funções de apoio (usadas pelas políticas) -------------------------------------------------
@@ -423,11 +425,11 @@ begin
       from jsonb_array_elements(p -> 'itens') i;
 
   update public.moderacao m set comunidades = t.comunidades, titulo = t.titulo, conteudo = t.conteudo,
-         privado = t.privado, recebido_em = t.recebido_em, atualizado_em = now()
+         privado = t.privado, recebido_em = t.recebido_em, fonte = 'planilha', atualizado_em = now()
     from _itens t
    where m.tipo = t.tipo and m.item_id = t.item_id
-     and (m.comunidades, m.titulo, m.conteudo, m.privado, m.recebido_em)
-         is distinct from (t.comunidades, t.titulo, t.conteudo, t.privado, t.recebido_em);
+     and (m.comunidades, m.titulo, m.conteudo, m.privado, m.recebido_em, m.fonte)
+         is distinct from (t.comunidades, t.titulo, t.conteudo, t.privado, t.recebido_em, 'planilha');
   get diagnostics n_atualizados = row_count;
 
   insert into public.moderacao (tipo, item_id, comunidades, titulo, conteudo, privado, recebido_em, status,
@@ -441,8 +443,10 @@ begin
      where not exists (select 1 from public.moderacao m where m.tipo = t.tipo and m.item_id = t.item_id);
   get diagnostics n_novos = row_count;
 
+  -- só apaga o que já tinha passado pela planilha: o que acabou de chegar pelo site ainda não está lá
   delete from public.moderacao m
-   where not exists (select 1 from _itens t where t.tipo = m.tipo and t.item_id = m.item_id);
+   where m.fonte = 'planilha'
+     and not exists (select 1 from _itens t where t.tipo = m.tipo and t.item_id = m.item_id);
   get diagnostics n_apagados = row_count;
 
   -- snapshots
@@ -463,6 +467,60 @@ begin
   return jsonb_build_object('itens_novos', n_novos, 'itens_atualizados', n_atualizados,
                             'itens_apagados', n_apagados, 'snapshots', n_snap, 'comunidades', n_coms);
 end $$;
+
+-- Envios que chegam na hora pelo site (Edge Function "receber", com a chave secreta).
+-- p = {itens: [...]} no mesmo formato da sincronização. Nunca sobrescreve o que já existe (a planilha e as
+-- decisões do painel valem mais). "Posso ajudar" e participações herdam as comunidades do item a que respondem.
+create or replace function public.rnq_receber_envio(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  i jsonb;
+  coms text[];
+  novos int := 0;
+  ref_tipo text;
+begin
+  if p is null or jsonb_typeof(p -> 'itens') <> 'array' then
+    raise exception 'Formato de envio inválido' using errcode = '22023';
+  end if;
+  for i in select * from jsonb_array_elements(p -> 'itens') loop
+    coms := coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(i -> 'comunidades', '[]'::jsonb)) x), '{}');
+    if coms = '{}' and nullif(i ->> 'ref', '') is not null then
+      ref_tipo := case i ->> 'tipo' when 'resposta' then 'mural' when 'participacao' then 'iniciativa' end;
+      select m.comunidades into coms from public.moderacao m where m.tipo = ref_tipo and m.item_id = i ->> 'ref';
+      coms := coalesce(coms, '{}');
+    end if;
+    insert into public.moderacao (tipo, item_id, comunidades, titulo, conteudo, privado, recebido_em, fonte)
+      values (i ->> 'tipo', i ->> 'item_id', coms, coalesce(i ->> 'titulo', ''), coalesce(i -> 'conteudo', '{}'::jsonb),
+              coalesce(i -> 'privado', '{}'::jsonb), nullif(i ->> 'recebido_em', '')::timestamptz, 'site')
+      on conflict (tipo, item_id) do nothing;
+    if found then
+      novos := novos + 1;
+      insert into public.auditoria (acao, alvo, detalhes)
+        values ('site.envio', (i ->> 'tipo') || ':' || (i ->> 'item_id'), jsonb_build_object('titulo', i ->> 'titulo'));
+    end if;
+  end loop;
+  return jsonb_build_object('novos', novos);
+end $$;
+
+-- O que o Mac fez por último (atualização, publicação do mapa, rotina diária), para o painel mostrar.
+create or replace function public.rnq_pipeline_registrar(p_chave text, p_valor jsonb) returns void
+language plpgsql security definer set search_path = public, pg_temp as $$
+begin
+  if p_chave not in ('ultima_publicacao', 'rotina_diaria') then
+    raise exception 'Chave inválida' using errcode = '22023';
+  end if;
+  insert into public.rnq_meta (chave, valor) values (p_chave, p_valor::text)
+    on conflict (chave) do update set valor = excluded.valor;
+end $$;
+
+create or replace function public.rnq_painel_status() returns jsonb
+language sql stable security definer set search_path = public, pg_temp as $$
+  select case when public.rnq_eu_ativo() and public.rnq_sessao_ok() then jsonb_build_object(
+    'ultima_atualizacao', (select max(gerado_em) from public.snapshots),
+    'ultima_publicacao', (select valor::jsonb from public.rnq_meta where chave = 'ultima_publicacao'),
+    'rotina_diaria', (select valor::jsonb from public.rnq_meta where chave = 'rotina_diaria'))
+  end;
+$$;
 
 -- Para o "manter ativo" (o plano gratuito pausa projetos parados) e para conferir a conexão.
 create or replace function public.rnq_ping() returns jsonb
@@ -505,6 +563,7 @@ end $$;
 grant execute on function public.rnq_eu_ativo(), public.rnq_sessao_ok(), public.rnq_eh_admin(),
   public.rnq_minhas_comunidades(), public.rnq_pode_ver(text[]),
   public.rnq_meu_perfil(), public.rnq_definir_idioma(text), public.rnq_decidir(bigint, text, text),
-  public.rnq_equipe_listar(), public.rnq_equipe_atualizar(uuid, text, boolean, text[], text)
+  public.rnq_equipe_listar(), public.rnq_equipe_atualizar(uuid, text, boolean, text[], text),
+  public.rnq_painel_status()
   to authenticated;
 grant execute on function public.rnq_ping() to anon, authenticated;

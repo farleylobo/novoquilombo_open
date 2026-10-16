@@ -402,6 +402,18 @@ class Supabase(unittest.TestCase):
         self.assertEqual(corpo.count('name="file"'), 2)
         self.assertEqual(req.headers['Authorization'], 'Bearer sbp_x')
 
+    def test_aviso_do_netlify_por_formulario(self):
+        from rnq.supabase import NetlifyHooks
+        f = Falso({'/forms': [{'name': 'mural', 'id': 'f1'}, {'name': 'opt-out', 'id': 'f2'}], '/hooks?site_id': []})
+        r = NetlifyHooks('nfp_x', 's1', abrir=f).ligar('https://p.supabase.co/functions/v1/receber?chave=k', ['mural'])
+        self.assertEqual(r['criados'], 1)
+        criar = f.pedidos[-1]
+        self.assertEqual(criar.get_method(), 'POST')
+        self.assertEqual(json.loads(criar.data), {'site_id': 's1', 'form_id': 'f1', 'type': 'url',
+                                                  'event': 'submission_created',
+                                                  'data': {'url': 'https://p.supabase.co/functions/v1/receber?chave=k'}})
+        self.assertEqual(criar.headers['Authorization'], 'Bearer nfp_x')
+
     def test_escolher_chaves_prefere_as_novas(self):
         lista = [{'name': 'anon', 'type': 'legacy', 'api_key': 'eyJanon'},
                  {'name': 'service_role', 'type': 'legacy', 'api_key': 'eyJsr'},

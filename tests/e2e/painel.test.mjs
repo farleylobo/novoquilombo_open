@@ -317,6 +317,7 @@ test('real: admin com MFA já cadastrado só digita o código; decide e convida 
   await p.locator('.toast', { hasText: 'Aprovado' }).waitFor();
   const dec = est.pedidos.find(x => x.caminho === '/rest/v1/rpc/rnq_decidir');
   assert.deepEqual(dec.corpo, { p_id: id, p_status: 'aprovado', p_motivo: null });
+  assert.match(await p.textContent('[data-teste=faixa-mapa]'), /atualizar\.py e publicar\.py.*falhou: Testes falhando/s);
   await aba(p, 'equipe');
   await p.fill('#c-email', 'june@exemplo.org');
   await p.selectOption('#c-papel', 'admin');
@@ -365,4 +366,15 @@ test('real: entrar pelo link do e-mail (e-mail padrão do Supabase, sem código)
   await p.locator('[data-teste=quem]', { hasText: 'Iara' }).waitFor();
   assert.ok(!(await p.evaluate(() => location.hash)).includes('access_token'), 'o token sai do endereço');
   await ctx.close();
+});
+
+test('faixa do mapa: rotina diária e última publicação; item que chegou pelo site marcado', async () => {
+  const p = await abrir(demo.url);
+  assert.match(await p.textContent('[data-teste=faixa-mapa]'), /todo dia às 07:00.*Última publicação do mapa/s);
+  await aba(p, 'moderacao');
+  assert.match(await p.textContent('[data-teste=faixa-mapa]'), /se atualiza sozinho/);
+  assert.equal(await p.locator('article.item .novo').count(), 1);
+  await p.click('[data-acao=recarregar]');
+  await p.locator('[data-aba=moderacao][aria-selected=true]').waitFor();
+  await fechar(p);
 });

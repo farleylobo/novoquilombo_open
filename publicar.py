@@ -101,7 +101,23 @@ def main():
         print('Falta NETLIFY_TOKEN/NETLIFY_SITE_ID no .env (veja docs/DEPLOY.md). '
               'Ou arraste a pasta acima em Netlify > seu projeto > Deploys.')
         sys.exit(1)
-    sys.exit(publicar(pasta, cfg))
+    codigo = publicar(pasta, cfg)
+    if codigo == 0 and os.environ.get('RNQ_ROTINA') != '1':
+        avisar_painel(cfg)
+    sys.exit(codigo)
+
+
+def avisar_painel(cfg):
+    """Conta ao painel admin quando o mapa foi publicado (aparece no topo do painel). Melhor esforço."""
+    from datetime import datetime
+    from rnq import admin
+    if not admin.configurado(cfg):
+        return
+    try:
+        admin.banco(cfg).rpc('rnq_pipeline_registrar', {'p_chave': 'ultima_publicacao', 'p_valor': {
+            'quando': datetime.now(admin.FUSO).isoformat(timespec='seconds'), 'ok': True, 'automatica': False}})
+    except admin.ErroSupabase:
+        pass
 
 
 if __name__ == '__main__':

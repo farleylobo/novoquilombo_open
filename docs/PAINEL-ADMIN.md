@@ -19,7 +19,8 @@ planilhas + formulários                    login (código por e-mail + MFA)
 
 - **O painel é a fonte da moderação.** As colunas `Publicar?`, `Incluir no mapa?`, `Aprovar?`, `Apresentação feita?` e `Encaminhado?` da planilha deixam de valer para os itens que já estão no painel.
 - **Itens novos entram com a decisão da planilha.** Na primeira atualização, quem já tinha `Sim` entra como aprovado ("decidido na planilha").
-- **O site público muda depois.** Uma decisão vale na hora dentro do painel, mas só chega ao site público depois de rodar `python3 atualizar.py` e `python3 publicar.py` no Mac.
+- **Envios chegam sozinhos, na hora.** Cada inscrição, oferta, pedido, resposta ou participação enviada no mapa dispara um aviso do Netlify para a função `receber` do Supabase, que põe o item na Moderação com a marca "chegou pelo site". Não precisa abrir o terminal.
+- **O mapa público se atualiza sozinho uma vez por dia.** Uma rotina no Mac (launchd) roda `atualizar.py` e `publicar.py` todo dia no horário escolhido (padrão 07:00). O painel mostra o horário da rotina e o resultado da última publicação. Se o Mac estiver desligado ou dormindo, a rotina roda quando ele acordar.
 - **Os contatos ficam separados por comunidade.** Cada comunidade tem a sua própria visão. Um tecelão recebe só as visões e os itens das comunidades que tece, e o banco garante isso mesmo para quem tentar chamar a API direto.
 
 ## Papéis
@@ -66,7 +67,9 @@ Faça tudo no Mac, dentro da pasta `visao-publica`.
    - cria o banco, as regras de acesso e o histórico;
    - configura o login: só por convite, código de 6 dígitos por e-mail e MFA;
    - grava a chave publicável em `admin/config.js` e a chave secreta só no `.env`;
-   - publica a função de convite;
+   - publica a função de convite e a função `receber`;
+   - cria a chave da função `receber` (`RNQ_RECEBER_SEGREDO`, só no `.env` e no Supabase);
+   - liga os formulários do mapa no Netlify à função `receber` (precisa do `NETLIFY_TOKEN` e do `NETLIFY_SITE_ID`);
    - convida você como o primeiro admin.
 
    Pode rodar de novo a qualquer momento: nada é duplicado e nenhum convite é reenviado.
@@ -82,16 +85,31 @@ Faça tudo no Mac, dentro da pasta `visao-publica`.
    python3 atualizar.py
    ```
 
-7. **Entre no painel.**
+7. **Ligue a atualização diária do mapa:**
+   ```bash
+   python3 painel_admin.py automatizar            # todo dia às 07:00
+   python3 painel_admin.py automatizar --hora 21  # outro horário
+   python3 painel_admin.py automatizar --desligar
+   ```
+   - O registro de cada execução fica em `~/Library/Logs/rnq-rotina.log`.
+   - Para testar na hora: `launchctl kickstart gui/$(id -u)/org.novoquilombo.rotina`.
+   - **Permissão do macOS (a confirmar no seu Mac):** se a pasta do projeto estiver na Mesa (Desktop) ou em Documentos, o macOS pode bloquear a rotina em segundo plano. Nesse caso o log mostra "Operation not permitted" e o painel mostra a falha. A solução é dar **Acesso Total ao Disco** ao `python3` em **Ajustes do Sistema → Privacidade e Segurança**, ou mover a pasta para fora da Mesa.
+
+8. **Entre no painel.**
    1. Abra https://painel-novoquilombo.netlify.app, digite seu e-mail e clique no link do e-mail que chegar. Sem SMTP próprio, o e-mail é o padrão do Supabase, em inglês, com o link "Log In". Com SMTP, o e-mail sai em PT/EN e traz também um código de 6 dígitos.
    2. Na primeira vez, leia o QR code com um app autenticador (Google Authenticator, Microsoft Authenticator ou 1Password) e digite o código do app.
 
 ## O dia a dia
 
+Com a automação ligada, o dia a dia é só o painel: os envios chegam na Moderação na hora, e o mapa público se atualiza sozinho uma vez por dia. Para publicar antes do horário:
+
 ```bash
 python3 atualizar.py      # formulários -> decisões do painel -> site -> painel -> testes
-python3 publicar.py       # quando quiser que o site público mostre o que foi aprovado
+python3 publicar.py       # o site público passa a mostrar o que foi aprovado
 ```
+
+- **Ver o que chegou:** a Moderação recarrega sozinha quando você volta para a aba, e o botão **Atualizar lista** recarrega na hora.
+- **Faixa do mapa:** no alto da Visão e da Moderação, o painel mostra o horário da rotina diária e a última publicação. Se a última publicação falhou, a faixa fica vermelha e diz em que etapa.
 
 - **Moderar:** abra o painel na aba **Moderação**. Para cada item, use **Aprovar** ou **Recusar**, com um motivo opcional. Para as tarefas, use **Marcar como feito** ou **Não vai acontecer**. Os contatos ficam escondidos até você clicar em "Mostrar contatos".
 - **Tecer:** a aba **Visão da rede** tem a saúde da rede, as apresentações sugeridas (com o botão "Copiar mensagem"), os pedidos em aberto e as pontes. Os botões no alto trocam entre a rede toda e cada comunidade.
@@ -164,11 +182,12 @@ admin/                       # o app (site estático, sem build)
   vendor/supabase.js fonts/ img/  _headers netlify.toml (CSP e cabeçalhos de segurança)
   supabase/schema.sql        # banco: tabelas, RLS, funções rnq_*, travas
   supabase/functions/convidar/  index.ts (Deno) + logica.js (testada no Node)
+  supabase/functions/receber/   index.ts + logica.js + contrato.json (envios do Netlify direto na Moderação)
 rnq/admin.py                 # itens de moderação, recorte por comunidade, visões, sincronização
 rnq/supabase.py              # conversa com o Supabase (só urllib)
-painel_admin.py              # configurar · publicar · status · demo
+painel_admin.py              # configurar · publicar · status · demo · ligar-formularios · automatizar · rotina
 tests/sql/                   # banco (PGlite: Postgres de verdade em memória) e função de convite
-tests/test_admin.py tests/test_painel_admin.py
+tests/test_admin.py tests/test_painel_admin.py tests/test_receber.py (função receber = pipeline)
 tests/e2e/painel.test.mjs    # navegador: demo, login, MFA, moderação, equipe, PT/EN, celular, CSP
 ```
 

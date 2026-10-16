@@ -82,6 +82,8 @@ export async function supabaseFalso(page, { dados, perfil, fatorVerificado = fal
       if (fn === 'rnq_meu_perfil') return json(route, 200, est.perfil ? { ...est.perfil, sessao_ok: ok } : null);
       if (!ok) return json(route, 403, { code: '42501', message: 'permission denied' });
       if (fn === 'rnq_definir_idioma') return json(route, 200, null);
+      if (fn === 'rnq_painel_status') return json(route, 200, { ultima_atualizacao: dados.gerado_em,
+        rotina_diaria: { ligada: false }, ultima_publicacao: { quando: dados.gerado_em, ok: false, erro: 'Testes falhando' } });
       if (fn === 'rnq_equipe_listar') return json(route, 200, dados.equipe);
       if (fn === 'rnq_decidir') {
         const i = dados.moderacao.find(x => x.id === corpo.p_id);

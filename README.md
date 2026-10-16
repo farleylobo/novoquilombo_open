@@ -27,7 +27,7 @@ o que oferece e o que precisa — e um conjunto de ferramentas para **tecer** a 
 | Quem abre o link | No card: perfil ("posso compartilhar / quero aprender"), papéis na rede, "Pode ser bom conhecer", "Eu conheço essa pessoa", ficar/sair do mapa | `site/` |
 | Farley e quem tece junto | **Planilha de tecelagem**: moderação de tudo que chega pelo site, diário de apresentações, papéis, correções | `RNQ-tecelagem.xlsx` |
 | Farley e quem tece junto | **Painel do tecelão**: fase da rede, dependência do hub, apresentações sugeridas com mensagem pronta, fila de moderação, pedidos sem resposta. Em português e inglês | `painel/painel-tecelagem.html` e `painel/painel-tecelagem-en.html` |
-| A equipe de tecelagem | **Painel admin com login**: o painel do tecelão por comunidade, **moderação** (aprovar/recusar), **equipe** (convites, papéis, comunidades) e **histórico**. Login por código + MFA, regras de acesso no banco (Supabase), PT/EN | `admin/` · https://painel-novoquilombo.netlify.app · `docs/PAINEL-ADMIN.md` |
+| A equipe de tecelagem | **Painel admin com login**: o painel do tecelão por comunidade, **moderação** (aprovar/recusar), **equipe** (convites, papéis, comunidades) e **histórico**. Envios do mapa chegam na hora; o mapa se atualiza sozinho uma vez por dia. Login por código + MFA, regras de acesso no banco (Supabase), PT/EN | `admin/` · https://painel-novoquilombo.netlify.app · `docs/PAINEL-ADMIN.md` |
 
 ## Como atualizar (o dia a dia)
 
@@ -85,8 +85,8 @@ visao-publica/
 ├── publicar.py           # checagens + publicação no Netlify (docs/DEPLOY.md)
 ├── exportar.py           # planilhas -> site + painel
 ├── sincronizar.py        # Netlify Forms -> RNQ-tecelagem.xlsx (API ou CSV)
-├── painel_admin.py       # painel admin: configurar (Supabase) · publicar · status · demo
-├── admin/                # o app do painel admin (estático) + supabase/ (banco e função de convite)
+├── painel_admin.py       # painel admin: configurar · publicar · status · demo · automatizar
+├── admin/                # o app do painel admin (estático) + supabase/ (banco, funções de convite e de envios)
 ├── rnq/                  # pipeline (Python puro + openpyxl)
 │   ├── config.py         #   decisões de modelo e lista fechada de campos públicos
 │   ├── fontes.py         #   leitura das planilhas

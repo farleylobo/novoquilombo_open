@@ -7,6 +7,7 @@
 A chave secreta e o token pessoal nunca são impressos nem gravados fora do .env.
 """
 import json
+import os
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -119,6 +120,13 @@ class Gestao:
     def segredos(self, pares):
         return self._p('/secrets', 'POST', [{'name': k, 'value': v} for k, v in pares.items()])
 
+    def exigir_login_na_funcao(self, slug, exigir):
+        """Liga/desliga a exigência de login (verify_jwt) de uma Edge Function já publicada."""
+        return self._p(f'/functions/{urllib.parse.quote(slug)}?verify_jwt={"true" if exigir else "false"}', 'PATCH', {})
+
+    def funcao(self, slug):
+        return self._p(f'/functions/{urllib.parse.quote(slug)}')
+
     def publicar_funcao(self, slug, arquivos, entrada='index.ts', verificar_jwt=True):
         """arquivos: {nome: texto}. Multipart como na documentação do endpoint functions/deploy."""
         limite = 'rnq' + uuid.uuid4().hex
@@ -129,11 +137,63 @@ class Gestao:
             partes.append(f'--{limite}\r\nContent-Disposition: {disp}\r\nContent-Type: {tipo}\r\n\r\n'.encode()
                           + conteudo.encode('utf-8') + b'\r\n')
         parte('metadata', json.dumps({'entrypoint_path': entrada, 'name': slug, 'verify_jwt': verificar_jwt}))
+        tipos = {'.ts': 'application/typescript', '.json': 'application/json'}
         for nome, texto in arquivos.items():
-            parte('file', texto, nome, 'application/typescript' if nome.endswith('.ts') else 'application/javascript')
+            parte('file', texto, nome, tipos.get(os.path.splitext(nome)[1], 'application/javascript'))
         corpo = b''.join(partes) + f'--{limite}--\r\n'.encode()
         return self._p(f'/functions/deploy?slug={urllib.parse.quote(slug)}', 'POST', corpo,
                        {'Content-Type': f'multipart/form-data; boundary={limite}'}, timeout=300)
+
+
+class NetlifyHooks:
+    """Avisos do Netlify (outgoing webhooks) para cada formulário do mapa: a cada envio, o Netlify chama a
+    Edge Function "receber". Usa o NETLIFY_TOKEN do .env."""
+    API = 'https://api.netlify.com/api/v1'
+
+    def __init__(self, token, site, abrir=urllib.request.urlopen):
+        if not token or not site:
+            raise ErroSupabase('Faltam NETLIFY_TOKEN e/ou NETLIFY_SITE_ID no .env')
+        self.token, self.site, self.abrir = token, site, abrir
+
+    def _p(self, caminho, metodo='GET', corpo=None):
+        return _pedir(self.API + caminho, metodo, {'Authorization': f'Bearer {self.token}', 'User-Agent': AGENTE},
+                      corpo, self.abrir, onde='Netlify')
+
+    def formularios(self):
+        return self._p(f'/sites/{self.site}/forms') or []
+
+    def avisos(self):
+        return self._p(f'/hooks?site_id={self.site}') or []
+
+    def criar(self, form_id, url):
+        return self._p(f'/hooks?site_id={self.site}', 'POST', {'site_id': self.site, 'form_id': form_id, 'type': 'url',
+                                                             'event': 'submission_created', 'data': {'url': url}})
+
+    def apagar(self, hook_id):
+        return self._p(f'/hooks/{hook_id}', 'DELETE')
+
+    def ligar(self, url_funcao, nomes_formularios):
+        """Garante um aviso por formulário apontando para url_funcao (com a chave). Apaga avisos antigos da mesma
+        função (chave trocada). Devolve {'criados': n, 'mantidos': n, 'apagados': n, 'formularios': [...]}."""
+        base = url_funcao.split('?')[0]
+        forms = {f['name']: f['id'] for f in self.formularios() if f.get('name') in nomes_formularios}
+        r = {'criados': 0, 'mantidos': 0, 'apagados': 0, 'formularios': sorted(forms)}
+        existentes = [h for h in self.avisos() if h.get('event') == 'submission_created'
+                      and str((h.get('data') or {}).get('url', '')).split('?')[0] == base]
+        ok = set()
+        for h in existentes:
+            if (h.get('data') or {}).get('url') == url_funcao and h.get('form_id') in forms.values() \
+                    and h.get('form_id') not in ok:
+                ok.add(h['form_id'])
+                r['mantidos'] += 1
+            else:
+                self.apagar(h['id'])
+                r['apagados'] += 1
+        for nome, fid in forms.items():
+            if fid not in ok:
+                self.criar(fid, url_funcao)
+                r['criados'] += 1
+        return r
 
 
 def escolher_chaves(lista):
