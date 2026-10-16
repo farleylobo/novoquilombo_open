@@ -368,6 +368,23 @@ test('real: entrar pelo link do e-mail (e-mail padrão do Supabase, sem código)
   await ctx.close();
 });
 
+test('real: rotina ligada mas sem rodar há mais de 26 h aparece como problema; recente não', async () => {
+  const dados = lerDemo(RAIZ);
+  const horas = (n) => new Date(Date.now() - n * 3600 * 1000).toISOString();
+  for (const [idade, atrasada] of [[30, true], [5, false]]) {
+    const status = { ultima_atualizacao: horas(idade), rotina_diaria: { ligada: true, hora: '07:00', ligada_em: horas(idade) },
+                     ultima_publicacao: { quando: horas(idade), ok: true, automatica: true } };
+    const p = await abrir(real.url, { antes: async (pg) => { await supabaseFalso(pg, { dados, perfil: ADMIN_PERFIL, fatorVerificado: true, status }); } });
+    await entrarComCodigo(p);
+    await p.fill('#mfa', '654321');
+    await p.click('button[type=submit]');
+    await p.locator('[data-teste=faixa-mapa]').waitFor();
+    assert.equal(await p.locator('[data-teste=rotina-atrasada]').count(), atrasada ? 1 : 0, `idade ${idade} h`);
+    assert.equal(await p.locator('[data-teste=faixa-mapa].falhou').count(), atrasada ? 1 : 0);
+    await fechar(p);
+  }
+});
+
 test('faixa do mapa: rotina diária e última publicação; item que chegou pelo site marcado', async () => {
   const p = await abrir(demo.url);
   assert.match(await p.textContent('[data-teste=faixa-mapa]'), /todo dia às 07:00.*Última publicação do mapa/s);

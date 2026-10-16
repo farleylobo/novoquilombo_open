@@ -8,12 +8,12 @@
   - Monta o item exatamente como o pipeline (`contrato.json` gerado de `rnq/admin.py`; paridade testada).
   - O pipeline não apaga nem sobrescreve itens que chegaram pelo site (`moderacao.fonte`).
 - **Mapa público atualizado uma vez por dia**, por rotina no Mac (`python3 painel_admin.py automatizar [--hora N] [--desligar]`, launchd). Se o Mac estiver dormindo, roda quando ele acordar. Log em `~/Library/Logs/rnq-rotina.log`.
-- **Faixa do mapa no painel:** horário da rotina, última publicação e, se falhou, em que etapa. `publicar.py` manual também registra.
+- **Faixa do mapa no painel:** horário da rotina, última publicação e, se falhou, em que etapa. Fica vermelha também quando a rotina está ligada e não roda há mais de 26 h (Mac desligado ou sem permissão do macOS). `publicar.py` manual também registra.
 - **Moderação:** botão "Atualizar lista" e recarga automática ao voltar para a aba.
 - `configurar` agora publica a função `receber`, cria a chave e liga os formulários do Netlify. Novo comando `ligar-formularios`.
 - Datas dos envios do Netlify (UTC) passam a ser gravadas no horário de Brasília.
 - Banco: esquema versão 2 (`rnq_receber_envio`, `rnq_pipeline_registrar`, `rnq_painel_status`).
-- Testes: 168 unitários, 40 do banco e funções, 21 de ponta a ponta do painel, 30 do site.
+- Testes: 168 unitários, 40 do banco e funções, 22 de ponta a ponta do painel, 30 do site.
 
 ## 2.6.2 — 16/10/2026 · Painel ligado ao mapa
 

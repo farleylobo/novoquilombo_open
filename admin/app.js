@@ -376,8 +376,13 @@
     const quando = pub && pub.quando ? t.ultima_publicacao(data(pub.quando)) : t.sem_publicacao;
     const partes = [rot.ligada ? t.rotina_ligada(rot.hora || '07:00') : t.rotina_desligada, ' ', quando];
     const falhou = pub && pub.ok === false;
-    return h('p', { class: 'aviso-vale' + (falhou ? ' falhou' : ''), 'data-teste': 'faixa-mapa', role: 'note' },
-      ...partes, falhou ? h('b', {}, ' ' + t.rotina_falhou(pub.erro || '')) : null);
+    // Rotina ligada mas sem notícia há mais de 26 h: o Mac não rodou (desligado, sem permissão do macOS…).
+    // Uma falha antes de o Python começar não registra nada; este aviso cobre esse caso.
+    const marcos = [pub && pub.quando, rot.ultima_execucao, rot.ligada_em].map(x => Date.parse(x || '')).filter(x => !isNaN(x));
+    const atrasada = !!rot.ligada && marcos.length > 0 && Date.now() - Math.max(...marcos) > 26 * 3600 * 1000;
+    return h('p', { class: 'aviso-vale' + (falhou || atrasada ? ' falhou' : ''), 'data-teste': 'faixa-mapa', role: 'note' },
+      ...partes, falhou ? h('b', {}, ' ' + t.rotina_falhou(pub.erro || '')) : null,
+      atrasada ? h('b', { 'data-teste': 'rotina-atrasada' }, ' ' + t.rotina_atrasada) : null);
   }
   async function recarregar() {
     try { await carregarTudo(); desenharApp(); } catch (e) { toast(erroAmigavel(e), 'erro'); }
