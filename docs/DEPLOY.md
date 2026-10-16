@@ -53,6 +53,12 @@ Depois, ele monta uma pasta só com os arquivos que podem ir ao ar, em `_trabalh
 
 O código é aberto no GitHub. Os dados não vão para lá: o `.gitignore` exclui planilhas, `.env`, `painel/`, `_trabalho/`, `privado/`, `site/data.js` e `site/rnq-publico.json`. Por isso o Netlify **não** está ligado ao GitHub para publicar a cada push, já que o repositório não tem os dados. A publicação sai da sua máquina, pelo `publicar.py`.
 
+## Painel admin (outro site)
+
+O painel admin com login é um site separado: **painel-novoquilombo** (https://painel-novoquilombo.netlify.app),
+publicado por `python3 painel_admin.py publicar` (ou `--so-pasta` para arrastar). Passo a passo completo, inclusive
+o Supabase: `docs/PAINEL-ADMIN.md`.
+
 ## Indexação
 
 O site tem `noindex`, na meta tag, no cabeçalho `X-Robots-Tag` e no `robots.txt`. Ele não aparece no Google, mas qualquer pessoa com o link consegue abrir. Para liberar a busca, remova essas três marcações. É uma decisão à parte e não precisa acompanhar a divulgação.

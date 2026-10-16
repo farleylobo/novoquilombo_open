@@ -3,9 +3,13 @@
 Lê as três planilhas e gera:
 - site/rnq-publico.json e site/data.js  (público — só campos da lista fechada, RF3/CA1)
 - painel/painel-tecelagem.html          (privado — saúde da rede, apresentações sugeridas, fila de moderação)
+- painel/painel-tecelagem-en.html       (privado — o mesmo painel em inglês)
 - _trabalho/historico-rede.json         (privado — evolução das métricas a cada atualização)
 
-Uso: python3 exportar.py            (ou python3 atualizar.py para sincronizar formulários antes)
+Com o painel admin configurado (SUPABASE_URL e SUPABASE_SECRET_KEY no .env), as decisões de moderação vêm do
+painel (veja docs/PAINEL-ADMIN.md): sem conexão com o painel, nada é gerado.
+
+Uso: python3 exportar.py            (ou python3 atualizar.py para sincronizar formulários e o painel admin)
      python3 exportar.py --exemplo  (rede fictícia, para quem clonou o projeto e não tem as planilhas)
 """
 import argparse
@@ -17,7 +21,7 @@ from datetime import datetime
 AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 
-from rnq import fontes, netlify, painel, publico, tecelagem  # noqa: E402
+from rnq import admin, fontes, netlify, painel, publico, tecelagem  # noqa: E402
 from rnq.rede import sugerir_apresentacoes  # noqa: E402
 from rnq.config import HUB_NOME  # noqa: E402
 
@@ -39,6 +43,7 @@ def caminhos(pasta):
         'tecelagem': os.path.join(pasta, 'RNQ-tecelagem.xlsx'),
         'site': os.path.join(pasta, 'site'),
         'painel': os.path.join(pasta, 'painel', 'painel-tecelagem.html'),
+        'painel_en': os.path.join(pasta, 'painel', 'painel-tecelagem-en.html'),
         'historico': os.path.join(pasta, '_trabalho', 'historico-rede.json'),
     }
 
@@ -61,7 +66,10 @@ def registrar_historico(caminho, met, agora):
     return hist
 
 
-def executar(pasta=AQUI, agora=None, sem_painel=False, silencioso=False, site=None, exemplo=False):
+def executar(pasta=AQUI, agora=None, sem_painel=False, silencioso=False, site=None, exemplo=False,
+             decisoes=None, contexto=None):
+    """decisoes: decisões de moderação do painel admin (rnq_pipeline_decisoes); valem no lugar das colunas da
+    planilha. contexto: dict opcional que recebe o que o painel admin precisa para sincronizar."""
     agora = agora or datetime.now()
     c = caminhos(pasta)
     if site:
@@ -69,8 +77,9 @@ def executar(pasta=AQUI, agora=None, sem_painel=False, silencioso=False, site=No
     tecelagem.garantir(c['tecelagem'], papeis_iniciais=PAPEIS_INICIAIS, correcoes_iniciais=CORRECOES_INICIAIS)
     sel = fontes.ler_selecao(c['selecao'])
     tem = fontes.ler_temas(c['temas'])
-    tec = fontes.ler_tecelagem(c['tecelagem'])
+    tec, avisos_painel = admin.aplicar_decisoes(fontes.ler_tecelagem(c['tecelagem']), decisoes)
     pub, avisos, interno = publico.montar(sel, tem, tec, agora)
+    avisos = avisos_painel + avisos
 
     os.makedirs(c['site'], exist_ok=True)
     js = json.dumps(pub, ensure_ascii=False, indent=1)
@@ -89,10 +98,14 @@ def executar(pasta=AQUI, agora=None, sem_painel=False, silencioso=False, site=No
         nomes_coms={x['id']: x['nome'] for x in pub['comunidades']},
         nomes_atu={a['id']: a['nome'] for a in pub['atuacoes']})
     hist = registrar_historico(c['historico'], interno['metricas'], agora)
+    site_url = netlify.ler_env(pasta).get('RNQ_SITE_URL', '')
+    if contexto is not None:
+        contexto.update(pub=pub, avisos=avisos, interno=interno, sug=sug, tec=tec, historico=hist, agora=agora,
+                        site_url=site_url, pasta_hist=os.path.join(pasta, '_trabalho', 'historico-painel'))
     if not sem_painel:
         os.makedirs(os.path.dirname(c['painel']), exist_ok=True)
-        site_url = netlify.ler_env(pasta).get('RNQ_SITE_URL', '')
         escrever(c['painel'], painel.gerar(pub, interno, tec, sug, avisos, hist, agora, site_url))
+        escrever(c['painel_en'], painel.gerar(pub, interno, tec, sug, avisos, hist, agora, site_url, idioma='en'))
 
     e, m = pub['estatisticas'], interno['metricas']
     if not silencioso:
@@ -119,7 +132,12 @@ if __name__ == '__main__':
             executar(pasta=pasta_ex, sem_painel=a.sem_painel, site=os.path.join(AQUI, 'site'), exemplo=True)
             print('Site gerado com a rede FICTÍCIA de exemplo. Para os dados reais: python3 exportar.py')
         else:
-            executar(sem_painel=a.sem_painel)
+            try:
+                decisoes = admin.buscar_decisoes(netlify.ler_env(AQUI))
+            except admin.ErroSupabase as err:
+                print('Painel admin sem conexão — nada foi gerado (as decisões de moderação estão lá):', err)
+                sys.exit(3)
+            executar(sem_painel=a.sem_painel, decisoes=decisoes)
     except publico.ErroPrivacidade as err:
         print('ERRO DE PRIVACIDADE — nada foi publicado:', err)
         sys.exit(2)

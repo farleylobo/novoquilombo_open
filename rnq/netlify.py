@@ -32,7 +32,9 @@ def ler_env(pasta):
                 if linha and not linha.startswith('#') and '=' in linha:
                     k, v = linha.split('=', 1)
                     cfg[k.strip()] = v.strip().strip('"').strip("'")
-    for k in ('NETLIFY_TOKEN', 'NETLIFY_SITE_ID', 'RNQ_SITE_URL'):
+    for k in ('NETLIFY_TOKEN', 'NETLIFY_SITE_ID', 'RNQ_SITE_URL', 'SUPABASE_URL', 'SUPABASE_SECRET_KEY',
+              'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ACCESS_TOKEN', 'SUPABASE_PROJECT_REF', 'RNQ_PAINEL_URL',
+              'NETLIFY_PAINEL_SITE_ID', 'RNQ_ADMIN_EMAIL', 'RNQ_ADMIN_NOME'):
         if os.environ.get(k):
             cfg[k] = os.environ[k]
     return cfg

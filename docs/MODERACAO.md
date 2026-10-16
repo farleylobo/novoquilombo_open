@@ -5,11 +5,17 @@ O sincronizador **só acrescenta linhas novas** (pelo ID do envio) e nunca alter
 
 Cores: **amarelo** = você edita · **vermelho** = privado, nunca publicado · **cinza** = interno, nunca publicado.
 
+> **Com o painel admin (desde a versão 2.6.0), a moderação é feita no painel**, não na planilha:
+> https://painel-novoquilombo.netlify.app → aba **Moderação** (ver `docs/PAINEL-ADMIN.md`). As colunas `Publicar?`,
+> `Incluir no mapa?`, `Aprovar?`, `Apresentação feita?` e `Encaminhado?` só valem para itens que ainda não chegaram
+> ao painel; depois disso, vale o painel, e o `atualizar.py` avisa se a planilha disser outra coisa. As demais
+> abas (Apresentações, Papéis, Correções) continuam na planilha. Sem o painel configurado, tudo segue como abaixo.
+
 ## Rotina sugerida (15 minutos por semana)
 
 1. `python3 atualizar.py` (ou "atualiza o mapa" para o Claude).
-2. Abra `painel/painel-tecelagem.html` → seção **Esperando você**.
-3. Modere na planilha, salve, rode de novo.
+2. Abra o painel admin (ou `painel/painel-tecelagem.html`) → seção **Esperando você**.
+3. Modere no painel (aba Moderação) — ou, sem painel, na planilha — e rode de novo.
 4. Faça 2 ou 3 **apresentações sugeridas** do painel e registre em **Apresentações**.
 
 ## Abas

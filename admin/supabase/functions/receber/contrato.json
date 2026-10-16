@@ -1,0 +1,704 @@
+{
+ "colunas": {
+  "Apresentações": [
+   [
+    "Data",
+    "editar"
+   ],
+   [
+    "Pessoa A",
+    "editar"
+   ],
+   [
+    "Pessoa B",
+    "editar"
+   ],
+   [
+    "Motivo",
+    "editar"
+   ],
+   [
+    "Feita por",
+    "editar"
+   ],
+   [
+    "Status",
+    "editar"
+   ],
+   [
+    "Observação",
+    "interno"
+   ]
+  ],
+  "Cadastros": [
+   [
+    "ID",
+    "auto"
+   ],
+   [
+    "Recebido em",
+    "auto"
+   ],
+   [
+    "Nome",
+    "editar"
+   ],
+   [
+    "Respondendo por",
+    "auto"
+   ],
+   [
+    "Cargo",
+    "editar"
+   ],
+   [
+    "Organização",
+    "editar"
+   ],
+   [
+    "LinkedIn",
+    "editar"
+   ],
+   [
+    "Site da organização",
+    "editar"
+   ],
+   [
+    "Tipo de organização",
+    "editar"
+   ],
+   [
+    "Contato (privado)",
+    "privado"
+   ],
+   [
+    "Cidade (privado)",
+    "privado"
+   ],
+   [
+    "Aniversário (privado)",
+    "privado"
+   ],
+   [
+    "Propósito",
+    "editar"
+   ],
+   [
+    "Temas",
+    "editar"
+   ],
+   [
+    "Tema novo sugerido",
+    "interno"
+   ],
+   [
+    "Atuação",
+    "editar"
+   ],
+   [
+    "Comunidades",
+    "editar"
+   ],
+   [
+    "Comunidade nova sugerida",
+    "interno"
+   ],
+   [
+    "Quer se aproximar de (privado)",
+    "privado"
+   ],
+   [
+    "Necessidade do território",
+    "interno"
+   ],
+   [
+    "Ofertas",
+    "editar"
+   ],
+   [
+    "Oferta (texto)",
+    "editar"
+   ],
+   [
+    "Pedido",
+    "interno"
+   ],
+   [
+    "Mural autorizado?",
+    "auto"
+   ],
+   [
+    "Objetivo",
+    "interno"
+   ],
+   [
+    "Fios",
+    "editar"
+   ],
+   [
+    "Formatos",
+    "interno"
+   ],
+   [
+    "Indicações (privado)",
+    "privado"
+   ],
+   [
+    "Visibilidade",
+    "auto"
+   ],
+   [
+    "18 anos ou mais",
+    "auto"
+   ],
+   [
+    "Idioma",
+    "auto"
+   ],
+   [
+    "Origem",
+    "auto"
+   ],
+   [
+    "Incluir no mapa?",
+    "editar"
+   ],
+   [
+    "Observação interna",
+    "interno"
+   ]
+  ],
+  "Confirmações": [
+   [
+    "ID",
+    "auto"
+   ],
+   [
+    "Recebido em",
+    "auto"
+   ],
+   [
+    "Nome",
+    "auto"
+   ]
+  ],
+  "Correções": [
+   [
+    "Pessoa (nome na seleção)",
+    "editar"
+   ],
+   [
+    "Campo",
+    "editar"
+   ],
+   [
+    "Novo valor",
+    "editar"
+   ],
+   [
+    "Aplicar?",
+    "editar"
+   ],
+   [
+    "Motivo",
+    "interno"
+   ]
+  ],
+  "Iniciativas": [
+   [
+    "ID",
+    "auto"
+   ],
+   [
+    "Recebido em",
+    "auto"
+   ],
+   [
+    "Tipo",
+    "editar"
+   ],
+   [
+    "Título",
+    "editar"
+   ],
+   [
+    "Descrição",
+    "editar"
+   ],
+   [
+    "Áreas",
+    "editar"
+   ],
+   [
+    "Participantes",
+    "editar"
+   ],
+   [
+    "Precisa de",
+    "editar"
+   ],
+   [
+    "Nome de quem propôs",
+    "editar"
+   ],
+   [
+    "Contato (privado)",
+    "privado"
+   ],
+   [
+    "Publicar?",
+    "editar"
+   ],
+   [
+    "Status",
+    "editar"
+   ],
+   [
+    "Observação interna",
+    "interno"
+   ]
+  ],
+  "Ligações sugeridas": [
+   [
+    "ID",
+    "auto"
+   ],
+   [
+    "Recebido em",
+    "auto"
+   ],
+   [
+    "Pessoa",
+    "editar"
+   ],
+   [
+    "Quem sugere",
+    "editar"
+   ],
+   [
+    "Contexto",
+    "interno"
+   ],
+   [
+    "Aprovar?",
+    "editar"
+   ],
+   [
+    "Observação interna",
+    "interno"
+   ]
+  ],
+  "Mural": [
+   [
+    "ID",
+    "auto"
+   ],
+   [
+    "Recebido em",
+    "auto"
+   ],
+   [
+    "Tipo",
+    "editar"
+   ],
+   [
+    "Título",
+    "editar"
+   ],
+   [
+    "Descrição",
+    "editar"
+   ],
+   [
+    "Áreas",
+    "editar"
+   ],
+   [
+    "Nome",
+    "editar"
+   ],
+   [
+    "Contato (privado)",
+    "privado"
+   ],
+   [
+    "Está no mapa como",
+    "editar"
+   ],
+   [
+    "Publicar?",
+    "editar"
+   ],
+   [
+    "Status",
+    "editar"
+   ],
+   [
+    "Observação interna",
+    "interno"
+   ]
+  ],
+  "Papéis": [
+   [
+    "Pessoa",
+    "editar"
+   ],
+   [
+    "Papel 1",
+    "editar"
+   ],
+   [
+    "Papel 2",
+    "editar"
+   ]
+  ],
+  "Participações": [
+   [
+    "ID",
+    "auto"
+   ],
+   [
+    "Recebido em",
+    "auto"
+   ],
+   [
+    "ID da iniciativa",
+    "auto"
+   ],
+   [
+    "Iniciativa",
+    "auto"
+   ],
+   [
+    "Nome",
+    "auto"
+   ],
+   [
+    "Contato (privado)",
+    "privado"
+   ],
+   [
+    "Mensagem",
+    "auto"
+   ],
+   [
+    "Encaminhado?",
+    "editar"
+   ]
+  ],
+  "Perfis": [
+   [
+    "ID",
+    "auto"
+   ],
+   [
+    "Recebido em",
+    "auto"
+   ],
+   [
+    "Pessoa no mapa",
+    "editar"
+   ],
+   [
+    "Posso compartilhar",
+    "editar"
+   ],
+   [
+    "Quero aprender",
+    "editar"
+   ],
+   [
+    "Colaboro com",
+    "editar"
+   ],
+   [
+    "Gostaria de colaborar com",
+    "interno"
+   ],
+   [
+    "Toparia convocar grupo sobre",
+    "editar"
+   ],
+   [
+    "Contato (privado)",
+    "privado"
+   ],
+   [
+    "Publicar?",
+    "editar"
+   ],
+   [
+    "Observação interna",
+    "interno"
+   ]
+  ],
+  "Respostas do mural": [
+   [
+    "ID",
+    "auto"
+   ],
+   [
+    "Recebido em",
+    "auto"
+   ],
+   [
+    "ID do item",
+    "auto"
+   ],
+   [
+    "Item",
+    "auto"
+   ],
+   [
+    "Nome",
+    "auto"
+   ],
+   [
+    "Contato (privado)",
+    "privado"
+   ],
+   [
+    "Mensagem",
+    "auto"
+   ],
+   [
+    "Apresentação feita?",
+    "editar"
+   ],
+   [
+    "Observação interna",
+    "interno"
+   ]
+  ],
+  "Saídas": [
+   [
+    "ID",
+    "auto"
+   ],
+   [
+    "Recebido em",
+    "auto"
+   ],
+   [
+    "Nome",
+    "auto"
+   ],
+   [
+    "Origem",
+    "auto"
+   ],
+   [
+    "Remover?",
+    "editar"
+   ],
+   [
+    "Observação interna",
+    "interno"
+   ]
+  ]
+ },
+ "formularios": {
+  "iniciativa": {
+   "aba": "Iniciativas",
+   "campos": {
+    "areas": "Áreas",
+    "contato": "Contato (privado)",
+    "descricao": "Descrição",
+    "nome": "Nome de quem propôs",
+    "participantes": "Participantes",
+    "precisa": "Precisa de",
+    "tipo": "Tipo",
+    "titulo": "Título"
+   },
+   "padrao": {
+    "Status": "Ativa"
+   },
+   "tipo": "iniciativa"
+  },
+  "iniciativa-participar": {
+   "aba": "Participações",
+   "campos": {
+    "contato": "Contato (privado)",
+    "iniciativa_id": "ID da iniciativa",
+    "iniciativa_titulo": "Iniciativa",
+    "mensagem": "Mensagem",
+    "nome": "Nome"
+   },
+   "padrao": {},
+   "tipo": "participacao"
+  },
+  "mural": {
+   "aba": "Mural",
+   "campos": {
+    "areas": "Áreas",
+    "contato": "Contato (privado)",
+    "descricao": "Descrição",
+    "no_mapa": "Está no mapa como",
+    "nome": "Nome",
+    "tipo": "Tipo",
+    "titulo": "Título"
+   },
+   "padrao": {
+    "Status": "Aberto"
+   },
+   "tipo": "mural"
+  },
+  "mural-resposta": {
+   "aba": "Respostas do mural",
+   "campos": {
+    "contato": "Contato (privado)",
+    "item_id": "ID do item",
+    "item_titulo": "Item",
+    "mensagem": "Mensagem",
+    "nome": "Nome"
+   },
+   "padrao": {},
+   "tipo": "resposta"
+  },
+  "opt-in": {
+   "aba": "Confirmações",
+   "campos": {
+    "nome": "Nome"
+   },
+   "padrao": {},
+   "tipo": null
+  },
+  "opt-out": {
+   "aba": "Saídas",
+   "campos": {
+    "nome": "Nome",
+    "origem": "Origem"
+   },
+   "padrao": {
+    "Remover?": "Sim"
+   },
+   "tipo": null
+  },
+  "participar": {
+   "aba": "Cadastros",
+   "campos": {
+    "aniversario": "Aniversário (privado)",
+    "atuacao": "Atuação",
+    "cargo": "Cargo",
+    "comunidade_outra": "Comunidade nova sugerida",
+    "comunidades": "Comunidades",
+    "contato": "Contato (privado)",
+    "fios": "Fios",
+    "formatos": "Formatos",
+    "idioma": "Idioma",
+    "indicacoes": "Indicações (privado)",
+    "linkedin": "LinkedIn",
+    "local": "Cidade (privado)",
+    "maior_18": "18 anos ou mais",
+    "mural": "Mural autorizado?",
+    "necessidade": "Necessidade do território",
+    "nome": "Nome",
+    "objetivo": "Objetivo",
+    "oferta": "Oferta (texto)",
+    "ofertas": "Ofertas",
+    "org_site": "Site da organização",
+    "org_tipo": "Tipo de organização",
+    "organizacao": "Organização",
+    "origem": "Origem",
+    "pedido": "Pedido",
+    "proposito": "Propósito",
+    "quem": "Respondendo por",
+    "quer_orgs": "Quer se aproximar de (privado)",
+    "tema_outro": "Tema novo sugerido",
+    "temas": "Temas",
+    "visibilidade": "Visibilidade"
+   },
+   "padrao": {},
+   "tipo": "cadastro"
+  },
+  "perfil": {
+   "aba": "Perfis",
+   "campos": {
+    "aprende": "Quero aprender",
+    "colabora_com": "Colaboro com",
+    "compartilha": "Posso compartilhar",
+    "contato": "Contato (privado)",
+    "convocaria": "Toparia convocar grupo sobre",
+    "gostaria_colaborar": "Gostaria de colaborar com",
+    "pessoa": "Pessoa no mapa"
+   },
+   "padrao": {},
+   "tipo": "perfil"
+  },
+  "sugestao-ligacao": {
+   "aba": "Ligações sugeridas",
+   "campos": {
+    "contexto": "Contexto",
+    "pessoa": "Pessoa",
+    "quem_sugere": "Quem sugere"
+   },
+   "padrao": {},
+   "tipo": "ligacao"
+  }
+ },
+ "no_titulo": {
+  "cadastro": [
+   "Nome"
+  ],
+  "iniciativa": [
+   "Tipo",
+   "Título"
+  ],
+  "ligacao": [
+   "Pessoa",
+   "Quem sugere"
+  ],
+  "mural": [
+   "Tipo",
+   "Título"
+  ],
+  "participacao": [
+   "Nome",
+   "Iniciativa"
+  ],
+  "perfil": [
+   "Pessoa no mapa"
+  ],
+  "resposta": [
+   "Nome",
+   "Item"
+  ]
+ },
+ "tema_comunidade": {
+  "esg sustentabilidade": "esg",
+  "estrategia financas reporte esg": "esg",
+  "produto dados transformacao digital": "tecnologia",
+  "tecnologia produto dados": "tecnologia"
+ },
+ "tipos": {
+  "cadastro": {
+   "aba": "Cadastros",
+   "coluna": "Incluir no mapa?"
+  },
+  "iniciativa": {
+   "aba": "Iniciativas",
+   "coluna": "Publicar?"
+  },
+  "ligacao": {
+   "aba": "Ligações sugeridas",
+   "coluna": "Aprovar?"
+  },
+  "mural": {
+   "aba": "Mural",
+   "coluna": "Publicar?"
+  },
+  "participacao": {
+   "aba": "Participações",
+   "coluna": "Encaminhado?"
+  },
+  "perfil": {
+   "aba": "Perfis",
+   "coluna": "Publicar?"
+  },
+  "resposta": {
+   "aba": "Respostas do mural",
+   "coluna": "Apresentação feita?"
+  }
+ },
+ "versao": 1
+}

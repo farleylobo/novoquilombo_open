@@ -11,9 +11,11 @@ Mapa vivo da Rede Novo Quilombo (RNQ): quem está na rede, onde se encontra, com
 o que oferece e o que precisa — e um conjunto de ferramentas para **tecer** a rede, inspiradas no
 *Network Weaver Handbook*, de June Holley.
 
-> Especificações: `docs/SPEC-RNQ-001-visao-publica.md` (mapa) e `docs/SPEC-RNQ-002-tecelagem.md` (mural, iniciativas, painel).
+> Especificações: `docs/SPEC-RNQ-001-visao-publica.md` (mapa), `docs/SPEC-RNQ-002-tecelagem.md` (mural, iniciativas, painel)
+> e `docs/SPEC-RNQ-003-painel-admin.md` (painel admin com login).
 >
-> **Publicar:** `docs/DEPLOY.md` · **Contribuir:** `CONTRIBUTING.md` · No ar: https://mapa-novoquilombo.netlify.app
+> **Publicar:** `docs/DEPLOY.md` · **Painel admin:** `docs/PAINEL-ADMIN.md` · **Contribuir:** `CONTRIBUTING.md`
+> No ar: https://mapa-novoquilombo.netlify.app · Painel: https://painel-novoquilombo.netlify.app
 
 ## O que tem aqui
 
@@ -24,7 +26,8 @@ o que oferece e o que precisa — e um conjunto de ferramentas para **tecer** a 
 | Quem quer entrar | **Faça parte**: cadastro em 5 passos (PT/EN) com prévia do card; cai na aba Cadastros para moderação | `site/participar.html` |
 | Quem abre o link | No card: perfil ("posso compartilhar / quero aprender"), papéis na rede, "Pode ser bom conhecer", "Eu conheço essa pessoa", ficar/sair do mapa | `site/` |
 | Farley e quem tece junto | **Planilha de tecelagem**: moderação de tudo que chega pelo site, diário de apresentações, papéis, correções | `RNQ-tecelagem.xlsx` |
-| Farley e quem tece junto | **Painel do tecelão**: fase da rede, dependência do hub, apresentações sugeridas com mensagem pronta, fila de moderação, pedidos sem resposta | `painel/painel-tecelagem.html` |
+| Farley e quem tece junto | **Painel do tecelão**: fase da rede, dependência do hub, apresentações sugeridas com mensagem pronta, fila de moderação, pedidos sem resposta. Em português e inglês | `painel/painel-tecelagem.html` e `painel/painel-tecelagem-en.html` |
+| A equipe de tecelagem | **Painel admin com login**: o painel do tecelão por comunidade, **moderação** (aprovar/recusar), **equipe** (convites, papéis, comunidades) e **histórico**. Envios do mapa chegam na hora; o mapa se atualiza sozinho uma vez por dia. Login por código + MFA, regras de acesso no banco (Supabase), PT/EN | `admin/` · https://painel-novoquilombo.netlify.app · `docs/PAINEL-ADMIN.md` |
 
 ## Como atualizar (o dia a dia)
 
@@ -39,8 +42,9 @@ python3 atualizar.py      # formulários -> planilha -> site + painel -> testes
 
 `atualizar.py` faz, em ordem:
 1. traz os envios novos dos formulários do site (se houver `.env` com o token do Netlify — ver `docs/DEPLOY.md`);
-2. gera `site/rnq-publico.json`, `site/data.js`, `painel/painel-tecelagem.html` e o histórico de saúde da rede;
-3. roda os testes. Se algo falhar, nada é escondido: você vê o erro.
+2. com o painel admin configurado, traz as decisões de moderação de lá (elas valem no lugar das colunas da planilha) e, no fim, manda os dados novos para o painel (`docs/PAINEL-ADMIN.md`);
+3. gera `site/rnq-publico.json`, `site/data.js`, o painel (`painel/painel-tecelagem.html` e a versão em inglês `painel-tecelagem-en.html`) e o histórico de saúde da rede;
+4. roda os testes. Se algo falhar, nada é escondido: você vê o erro.
 
 Depois, abra `painel/painel-tecelagem.html` para ver o que fazer, e `site/index.html` para conferir o site.
 Para ver o mural e as iniciativas com exemplos fictícios: `site/index.html?demo=1`.
@@ -50,6 +54,7 @@ Para ver o mural e as iniciativas com exemplos fictícios: `site/index.html?demo
 O site tem um botão **PT | EN** no cabeçalho. Em inglês, o nome da rede é **Novo Quilombo Network**.
 
 - **Textos da interface:** `site/i18n.js`. Para mudar uma frase, edite os dois blocos, `pt` e `en`. Um teste confere se os dois têm as mesmas chaves.
+- **Textos do painel do tecelão:** `TEXTOS` em `rnq/painel.py`, também com os blocos `pt` e `en` e o mesmo teste. As fases da rede em inglês ficam em `FASES_EN` (`rnq/rede.py`).
 - **Nomes de comunidades, temas e atuação:** `NOMES_EN` em `rnq/config.py`. Os nomes dos papéis ficam em `PAPEIS`, no mesmo arquivo. Se você criar um nome novo sem tradução, o site mostra o nome em português e o `atualizar.py` avisa.
 - **Não são traduzidos:** o que as pessoas escrevem (mural, iniciativas, perfil, cargos) e os nomes de pessoas e organizações.
 - **Idioma de abertura:** o link com `?lang=en` (ou `?lang=pt`) vem primeiro. Depois vale a última escolha feita no botão. Sem nenhuma das duas, o site segue o idioma do navegador: português para quem usa português e inglês para os demais.
@@ -80,6 +85,8 @@ visao-publica/
 ├── publicar.py           # checagens + publicação no Netlify (docs/DEPLOY.md)
 ├── exportar.py           # planilhas -> site + painel
 ├── sincronizar.py        # Netlify Forms -> RNQ-tecelagem.xlsx (API ou CSV)
+├── painel_admin.py       # painel admin: configurar · publicar · status · demo · automatizar
+├── admin/                # o app do painel admin (estático) + supabase/ (banco, funções de convite e de envios)
 ├── rnq/                  # pipeline (Python puro + openpyxl)
 │   ├── config.py         #   decisões de modelo e lista fechada de campos públicos
 │   ├── fontes.py         #   leitura das planilhas
@@ -87,7 +94,9 @@ visao-publica/
 │   ├── rede.py           #   saúde da rede e sugestões de apresentação
 │   ├── tecelagem.py      #   planilha de tecelagem (criação, migração, envios)
 │   ├── netlify.py        #   leitura dos formulários
-│   └── painel.py         #   painel do tecelão
+│   ├── painel.py         #   painel do tecelão (arquivo local e visão do painel admin)
+│   ├── admin.py          #   painel admin: moderação, recorte por comunidade, sincronização
+│   └── supabase.py       #   conversa com o Supabase (só urllib)
 ├── site/                 # o que vai para o Netlify
 │   ├── index.html  app.js  app.css  i18n.js (PT/EN)  demo.js  vendor/ (d3, 3d-force-graph)
 │   ├── data.js  rnq-publico.json   (gerados — não editar)
@@ -115,6 +124,8 @@ privacidade) e pelo formato das planilhas descrito em `docs/MODERACAO.md`.
 ```bash
 python3 -m unittest discover -s tests -q      # testes do pipeline (sem instalar nada além de openpyxl)
 npm install && npm run test:e2e               # testes do site num navegador de verdade (Playwright)
+npm run test:sql                              # banco do painel admin (Postgres em memória) e função de convite
+npm run test:painel                           # painel admin no navegador (demo, login, MFA, moderação, equipe)
 ```
 
 O site usa as bibliotecas de `site/vendor` (sem CDN), então os testes de ponta a ponta funcionam offline
