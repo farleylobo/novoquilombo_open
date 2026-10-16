@@ -333,3 +333,22 @@ test('real: quem tem login mas não foi convidado vê a explicação', async () 
   await p.locator('h1', { hasText: 'ainda não tem acesso' }).waitFor();
   await fechar(p);
 });
+
+test('real: entrar pelo link do e-mail (e-mail padrão do Supabase, sem código)', async () => {
+  const dados = lerDemo(RAIZ);
+  const perfil = { user_id: 'u-1', email: 'iara@exemplo.org', nome: 'Iara', papel: 'tecelao', idioma: 'pt',
+                   comunidades: ['tecnologia'], mfa_exigido: false };
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const agora = Math.floor(Date.now() / 1000);
+  const tok = `${b64({ alg: 'HS256' })}.${b64({ sub: 'u-1', email: perfil.email, role: 'authenticated', aal: 'aal1', exp: agora + 3600, iat: agora })}.x`;
+  const hash = `#access_token=${tok}&expires_at=${agora + 3600}&expires_in=3600&refresh_token=r1&token_type=bearer&type=magiclink`;
+  const ctx = await browser.newContext({ viewport: { width: 1200, height: 800 }, locale: 'pt-BR' });
+  const p = await ctx.newPage();
+  const est = await supabaseFalso(p, { dados, perfil });
+  est.aal = 'aal1';
+  await p.goto(real.url + '/' + hash);
+  await p.waitForFunction(() => window.RNQ_PRONTO === true);
+  await p.locator('[data-teste=quem]', { hasText: 'Iara' }).waitFor();
+  assert.ok(!(await p.evaluate(() => location.hash)).includes('access_token'), 'o token sai do endereço');
+  await ctx.close();
+});

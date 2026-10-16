@@ -83,7 +83,7 @@ Faça tudo no Mac, dentro da pasta `visao-publica`.
    ```
 
 7. **Entre no painel.**
-   1. Abra https://painel-novoquilombo.netlify.app, digite seu e-mail e o código que chegar.
+   1. Abra https://painel-novoquilombo.netlify.app, digite seu e-mail e clique no link do e-mail que chegar. Sem SMTP próprio, o e-mail é o padrão do Supabase, em inglês, com o link "Log In". Com SMTP, o e-mail sai em PT/EN e traz também um código de 6 dígitos.
    2. Na primeira vez, leia o QR code com um app autenticador (Google Authenticator, Microsoft Authenticator ou 1Password) e digite o código do app.
 
 ## O dia a dia

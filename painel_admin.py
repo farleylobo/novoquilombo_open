@@ -105,6 +105,10 @@ def campos_auth(painel_url, c):
         'mfa_totp_verify_enabled': True,
         'mailer_otp_length': 6,
         'mailer_otp_exp': 3600,
+    }
+    # Textos próprios dos e-mails (com o código de 6 dígitos, em PT e EN): o plano gratuito do Supabase só deixa
+    # mudar os modelos com e-mail próprio (SMTP). Sem SMTP, valem os e-mails padrão, que trazem o link de acesso.
+    modelos = {
         'mailer_subjects_magic_link': 'Seu acesso ao painel da RNQ · Your Novo Quilombo panel sign-in',
         'mailer_templates_magic_link_content': _email(
             'Seu código de acesso', 'Digite este código no painel (vale por 1 hora) ou use o botão.',
@@ -116,7 +120,8 @@ def campos_auth(painel_url, c):
             'You were invited to weave the network',
             'You are now part of the Novo Quilombo Network weaving team. Use the button to sign in.', codigo=False),
     }
-    if c.get('SMTP_HOST'):                            # e-mail próprio (necessário para convidar outras pessoas)
+    if c.get('SMTP_HOST'):
+        campos.update(modelos)                            # e-mail próprio (necessário para convidar outras pessoas)
         campos.update({
             'smtp_host': c['SMTP_HOST'], 'smtp_port': str(c.get('SMTP_PORT') or '587'),
             'smtp_user': c.get('SMTP_USER', ''), 'smtp_pass': c.get('SMTP_PASS', ''),
@@ -158,8 +163,9 @@ def configurar(c=None, gestao=None, banco=None):
     g.configurar_auth(campos_auth(painel_url, c))
     ok(f'login: só por convite, código por e-mail, MFA, endereço {painel_url}')
     if not c.get('SMTP_HOST'):
-        print('  ! Sem e-mail próprio (SMTP): o Supabase só envia para quem é da equipe do projeto e 2 e-mails/hora.')
-        print('    Para você, basta. Antes de convidar outras pessoas, configure SMTP (docs/PAINEL-ADMIN.md).')
+        print('  ! Sem e-mail próprio (SMTP): vale o e-mail padrão do Supabase (com o link de acesso, em inglês),')
+        print('    que só chega para quem é da equipe do projeto e no máximo 2 por hora. Para você, basta.')
+        print('    Antes de convidar outras pessoas, configure SMTP (docs/PAINEL-ADMIN.md).')
 
     publica, secreta = escolher_chaves(g.chaves())
     url = f'https://{c["SUPABASE_PROJECT_REF"]}.supabase.co'

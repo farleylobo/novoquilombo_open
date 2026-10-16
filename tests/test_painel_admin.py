@@ -97,7 +97,7 @@ class Configurar(unittest.TestCase):
         self.assertTrue(auth['disable_signup'])
         self.assertTrue(auth['mfa_totp_enroll_enabled'] and auth['mfa_totp_verify_enabled'])
         self.assertEqual(auth['site_url'], 'https://painel-novoquilombo.netlify.app')
-        self.assertIn('{{ .Token }}', auth['mailer_templates_magic_link_content'])
+        self.assertNotIn('mailer_templates_magic_link_content', auth, 'plano gratuito sem SMTP não aceita modelos')
         self.assertEqual(g.chamadas[2][2], ['index.ts', 'logica.js'])
         self.assertEqual(g.chamadas[3][1]['RNQ_PAINEL_URL'], 'https://painel-novoquilombo.netlify.app')
         self.assertEqual(g.chamadas[3][1]['RNQ_CHAVE_PUBLICA'], 'sb_publishable_ABC')
@@ -132,6 +132,7 @@ class Configurar(unittest.TestCase):
         campos = painel_admin.campos_auth('https://p', cfg)
         self.assertEqual((campos['smtp_host'], campos['smtp_port'], campos['smtp_admin_email']),
                          ('smtp.gmail.com', '587', 'rnqbrasil@gmail.com'))
+        self.assertIn('{{ .Token }}', campos['mailer_templates_magic_link_content'])
 
     def test_nunca_grava_chave_secreta_no_app(self):
         with self.assertRaises(ErroSupabase):
