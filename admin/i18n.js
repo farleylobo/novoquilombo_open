@@ -108,6 +108,9 @@ window.RNQ_I18N = {
     erro_permissao: 'Você não tem permissão para isso.',
     erro_smtp: 'O e-mail de convite não foi enviado: o projeto precisa de um e-mail próprio (SMTP).',
     erro_config: 'O painel ainda não foi configurado neste endereço.',
+    ver_mapa: 'Ver o mapa',
+    ver_no_mapa: 'Ver no mapa',
+    nota_mapa: 'Abre o mapa público em outra aba. Ele mostra a última versão publicada: o que você aprova aqui aparece lá depois de rodar atualizar.py e publicar.py no Mac.',
     outra_lingua: 'English',
   },
   en: {
@@ -210,6 +213,9 @@ window.RNQ_I18N = {
     erro_permissao: 'You do not have permission to do that.',
     erro_smtp: 'The invitation e-mail was not sent: the project needs its own e-mail sender (SMTP).',
     erro_config: 'The panel has not been set up at this address yet.',
+    ver_mapa: 'Open the map',
+    ver_no_mapa: 'See on the map',
+    nota_mapa: 'Opens the public map in a new tab. It shows the last published version: what you approve here shows up there after running atualizar.py and publicar.py on the Mac.',
     outra_lingua: 'Português',
   },
 };

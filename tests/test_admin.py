@@ -156,6 +156,27 @@ class Itens(unittest.TestCase):
         self.assertTrue(all(c['nome'] for c in self.pk['comunidades']))
 
 
+class LinkNoMapa(unittest.TestCase):
+    def test_itens_apontam_para_o_card_certo_no_mapa(self):
+        ctx = _Exemplo.contexto()
+        itens = {(i['tipo'], i['item_id']): i for i in pacote(ctx)['itens']}
+        ids = {p['id'] for p in ctx['pub']['pessoas']}
+        cad = next(i for i in itens.values() if i['titulo'] == 'Helena Exemplar')
+        self.assertIsNone(cad['conteudo']['mapa'], 'cadastro pendente ainda não está no mapa')
+        perfil = next(i for i in itens.values() if i['tipo'] == 'perfil')
+        self.assertTrue(perfil['conteudo']['mapa'].startswith('p/'))
+        self.assertIn(perfil['conteudo']['mapa'][2:], ids)
+        mural = next(i for i in itens.values() if i['tipo'] == 'mural')
+        self.assertTrue(mural['conteudo']['mapa'].startswith('p/'), 'pendente: aponta para quem publicou')
+
+    def test_mural_aprovado_aponta_para_o_item(self):
+        base = _Exemplo.contexto()
+        m = next(i for i in pacote(base)['itens'] if i['tipo'] == 'mural')
+        ctx = _Exemplo.contexto(decisoes=[{'tipo': 'mural', 'item_id': m['item_id'], 'status': 'aprovado'}])
+        novo = next(i for i in pacote(ctx)['itens'] if i['item_id'] == m['item_id'])
+        self.assertEqual(novo['conteudo']['mapa'], 'm/' + m['item_id'])
+
+
 class QuemSaiu(unittest.TestCase):
     def test_rf25_quem_saiu_some_dos_itens_e_dos_snapshots(self):
         ctx = _Exemplo.contexto()

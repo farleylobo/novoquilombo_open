@@ -223,6 +223,14 @@ test('celular (390 px): nenhuma aba tem rolagem horizontal', async () => {
   await fechar(p);
 });
 
+test('demo: "Ver o mapa" abre o mapa com os exemplos e os itens não têm link', async () => {
+  const p = await abrir(demo.url);
+  assert.equal(await p.getAttribute('[data-teste=ver-mapa]', 'href'), 'https://mapa-novoquilombo.netlify.app/?demo=1');
+  await aba(p, 'moderacao');
+  assert.equal(await p.locator('[data-acao=ver-no-mapa]').count(), 0);
+  await fechar(p);
+});
+
 test('teclado: setas trocam de aba', async () => {
   const p = await abrir(demo.url);
   await p.focus('[data-aba=visao]');
@@ -296,7 +304,13 @@ test('real: admin com MFA já cadastrado só digita o código; decide e convida 
   await p.fill('#mfa', '654321');
   await p.click('button[type=submit]');
   await p.locator('[data-teste=quem]').waitFor();
+  assert.equal(await p.getAttribute('[data-teste=ver-mapa]', 'href'), 'https://mapa-novoquilombo.netlify.app/');
+  assert.equal(await p.getAttribute('[data-teste=ver-mapa]', 'target'), '_blank');
   await aba(p, 'moderacao');
+  const comLink = dados.moderacao.find(i => i.status === 'pendente' && i.conteudo.mapa);
+  const card = p.locator(`article.item[data-id="${comLink.id}"]`);
+  assert.equal(await card.locator('[data-acao=ver-no-mapa]').getAttribute('href'),
+               'https://mapa-novoquilombo.netlify.app/#' + comLink.conteudo.mapa);
   const item = p.locator('article.item').first();
   const id = Number(await item.getAttribute('data-id'));
   await item.locator('[data-acao=aprovar]').click();

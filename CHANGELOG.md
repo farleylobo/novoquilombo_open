@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.6.2 — 16/10/2026 · Painel ligado ao mapa
+
+- Botão **"Ver o mapa"** no topo do painel: abre o mapa público em outra aba (no idioma do painel).
+- **"Ver no mapa"** em cada item da moderação: abre direto o card da pessoa (`#p/…`), o item do mural (`#m/…`) ou a iniciativa (`#i/…`), quando o alvo está nos dados da última atualização. O mapa no ar mostra a última versão publicada.
+- Sem SMTP próprio, o painel usa os e-mails padrão do Supabase (o plano gratuito não aceita modelos próprios) e o login funciona pelo link do e-mail.
+
 ## 2.6.0 — 15/10/2026 · Painel admin com login
 
 - Novo **painel admin com login**, em https://painel-novoquilombo.netlify.app (pasta `admin/`). Ele substitui o envio do HTML local e está em português e inglês.

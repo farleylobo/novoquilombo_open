@@ -213,6 +213,31 @@ def sem_saidas(tec):
             for aba, linhas in tec.items()}
 
 
+def alvo_no_mapa(tipo, r, pub, interno):
+    """Trecho do link direto no mapa público ('p/<pessoa>', 'm/<item>' ou 'i/<iniciativa>') quando o alvo está nos
+    dados gerados nesta atualização; senão None. (O mapa no ar mostra a última versão publicada com publicar.py.)"""
+    idx = interno['indice']
+    pessoas = {p['id'] for p in pub['pessoas']}
+    mural = {m['id'] for m in pub['mural']}
+    inis = {i['id'] for i in pub['iniciativas']}
+
+    def pessoa(*cols):
+        for c in cols:
+            pid = idx.achar(r.get(c)) if txt(r.get(c)) else None
+            if pid in pessoas:
+                return 'p/' + pid
+        return None
+    if tipo == 'mural':
+        return 'm/' + item_id(tipo, r) if item_id(tipo, r) in mural else pessoa('Está no mapa como', 'Nome')
+    if tipo == 'iniciativa':
+        return 'i/' + item_id(tipo, r) if item_id(tipo, r) in inis else pessoa('Nome de quem propôs')
+    if tipo == 'resposta':
+        return 'm/' + txt(r.get('ID do item')) if txt(r.get('ID do item')) in mural else None
+    if tipo == 'participacao':
+        return 'i/' + txt(r.get('ID da iniciativa')) if txt(r.get('ID da iniciativa')) in inis else None
+    return pessoa({'perfil': 'Pessoa no mapa', 'ligacao': 'Pessoa', 'cadastro': 'Nome'}[tipo])
+
+
 def itens_moderacao(tec, pub, interno):
     """Itens para a aba Moderação do painel: conteúdo (o que iria ao site) separado do privado (contatos e notas)."""
     com = Comunidades(pub, interno)
@@ -238,7 +263,8 @@ def itens_moderacao(tec, pub, interno):
                 'tipo': tipo, 'item_id': iid, 'comunidades': coms.get((tipo, iid), []),
                 'titulo': _titulo(tipo, r)[:200],
                 'conteudo': {'aba': aba, 'coluna': col, 'campos': campos, 'alertas': alertas,
-                             'bloqueio': alertas[0] if alertas else None},
+                             'bloqueio': alertas[0] if alertas else None,
+                             'mapa': alvo_no_mapa(tipo, r, pub, interno)},
                 'privado': {'campos': privado},
                 'recebido_em': _quando(r.get('Recebido em')),
                 'status_planilha': status_da_planilha(tipo, r.get(col)),

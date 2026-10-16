@@ -55,6 +55,15 @@
     if (!c) return id;
     return E.idioma === 'en' && c.nome_en ? c.nome_en : c.nome;
   }
+  // Endereço do mapa público. Na demonstração, o mapa abre com os exemplos (?demo=1) e os itens não têm link,
+  // porque a rede fictícia não está no mapa de verdade.
+  function mapaUrl(trecho) {
+    const cfg = window.RNQ_PAINEL_CONFIG || {};
+    const base = String(cfg.mapaUrl || 'https://mapa-novoquilombo.netlify.app').replace(/\/+$/, '');
+    if (E.api && E.api.modo === 'demo') return base + '/?demo=1';
+    const lang = E.idioma === 'en' ? '?lang=en' : '';
+    return base + '/' + lang + (trecho && /^[pmi]\/[A-Za-z0-9_.:-]+$/.test(trecho) ? '#' + trecho : '');
+  }
   function rotuloColuna(c) { return E.idioma === 'en' ? (COLUNAS_EN[c] || c) : c; }
   let tempoToast;
   function toast(msg, tipo) {
@@ -280,6 +289,8 @@
         h('div', { class: 'eu' },
           h('span', { 'data-teste': 'quem' }, E.perfil.nome || E.perfil.email),
           h('span', { class: 'papel' }, admin ? t.papel_admin : t.papel_tecelao),
+          h('a', { class: 'mapa', href: mapaUrl(), target: '_blank', rel: 'noopener noreferrer', title: t.nota_mapa,
+                   'data-teste': 'ver-mapa' }, t.ver_mapa),
           h('button', { type: 'button', onclick: trocarIdioma, lang: E.idioma === 'pt' ? 'en' : 'pt', 'data-teste': 'idioma' }, t.outra_lingua),
           h('button', { type: 'button', onclick: sair }, t.sair))),
       nav));
@@ -456,6 +467,11 @@
     } else {
       botoes.append(h('button', { type: 'button', class: 'btn claro', 'data-acao': 'desfazer',
                                   onclick: () => decidir(i, 'pendente') }, t.desfazer));
+    }
+    const alvo = i.conteudo && i.conteudo.mapa;
+    if (alvo && E.api.modo !== 'demo' && E.recusando !== i.id) {
+      botoes.append(h('a', { class: 'btn link', href: mapaUrl(alvo), target: '_blank', rel: 'noopener noreferrer',
+                             title: t.nota_mapa, 'data-acao': 'ver-no-mapa' }, t.ver_no_mapa));
     }
     art.append(botoes);
     return art;

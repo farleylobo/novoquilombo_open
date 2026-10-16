@@ -70,12 +70,16 @@ def gravar_env(valores, pasta=None):
         pass
 
 
-def escrever_config(url, chave_publica, pasta=None):
+MAPA_URL_PADRAO = 'https://mapa-novoquilombo.netlify.app'
+
+
+def escrever_config(url, chave_publica, pasta=None, mapa_url=None):
     if SEGREDO.search(chave_publica) or chave_publica.startswith('sb_secret_'):
         raise ErroSupabase('Recusado: isso é uma chave secreta, não pode ir para o app do navegador.')
     texto = ('// Gerado por "python3 painel_admin.py configurar". Só dados públicos: o endereço do projeto e a chave\n'
              '// publicável, que sozinha não abre nada: os dados exigem login e passam pelas regras de acesso do banco.\n'
-             'window.RNQ_PAINEL_CONFIG = ' + json.dumps({'supabaseUrl': url.rstrip('/'), 'chavePublica': chave_publica},
+             'window.RNQ_PAINEL_CONFIG = ' + json.dumps({'supabaseUrl': url.rstrip('/'), 'chavePublica': chave_publica,
+                                                         'mapaUrl': (mapa_url or MAPA_URL_PADRAO).rstrip('/')},
                                                         indent=2) + ';\n')
     with open(os.path.join(pasta or ADMIN, 'config.js'), 'w', encoding='utf-8') as fh:
         fh.write(texto)
@@ -169,7 +173,7 @@ def configurar(c=None, gestao=None, banco=None):
 
     publica, secreta = escolher_chaves(g.chaves())
     url = f'https://{c["SUPABASE_PROJECT_REF"]}.supabase.co'
-    escrever_config(url, publica)
+    escrever_config(url, publica, mapa_url=c.get('RNQ_SITE_URL'))
     gravar_env({'SUPABASE_URL': url, 'SUPABASE_SECRET_KEY': secreta, 'RNQ_PAINEL_URL': painel_url})
     ok('chaves: a publicável em admin/config.js, a secreta só no .env deste Mac')
 
